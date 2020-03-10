@@ -2,6 +2,9 @@ import React, { Component, useState, useEffect } from 'react'
 import { BrowserRouter, Route, Link } from 'react-router-dom'
 // page
 import Home from './views/Home'
+import Debug from './views/Debug'
+import Example from './views/Example'
+
 import About from './views/About'
 import Record from './views/Record'
 import Renamer from './views/Renamer'
@@ -19,6 +22,8 @@ class App extends Component {
             <BrowserRouter>
                 <div className="app">
                     <Route path="/" exact component={Home} />
+                    <Route path="/debug" component={Debug} />
+                    <Route path="/example" component={Example} />
                     <Route path="/about" component={About} />
                     <Route path="/records" component={Record} />
                     <Route path="/renamer" component={Renamer} />

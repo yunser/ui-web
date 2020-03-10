@@ -1,14 +1,19 @@
 .example {
     display: flex;
-    .code {
-        width: 300px;
-        height: 300px;
+    margin-bottom: 24px;
+    .codeBox {
+        width: 400px;
+        height: 400px;
         border: 1px solid #000;
+        overflow: auto;
+        flex-shrink: 0;
     }
     .preview {
-        width: 300px;
-        height: 300px;
+        width: 400px;
+        height: 400px;
         border: 1px solid #000;
+        overflow: hidden;
+        flex-shrink: 0;
     }
 }
 
@@ -77,7 +82,7 @@
 }
 .container {
     width: 100%;
-    max-width: 800px;
+    max-width: 960px;
     // max-width: 1000px;
     margin: 0 auto;
     padding: 16px;

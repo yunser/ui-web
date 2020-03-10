@@ -20,7 +20,7 @@ const root2 = {
             // y: 0,
             width: '100%',
             height: '100%',
-            url: 'http://localhost:8082/mark_bg.jpg',
+            url: 'http://localhost:8080/mark_bg.jpg',
         },
         {
             name: 'mask',
@@ -81,7 +81,7 @@ const root2 = {
                     right: 32,
                     width: 142,
                     height: 142,
-                    url: 'http://localhost:8082/qrcode.png',
+                    url: 'http://localhost:8080/qrcode.png',
                 },
             ]
         },
@@ -153,7 +153,7 @@ const root2 = {
                                             text: '%',
                                             textSize: 28,
                                             // textAlign: 'center',
-                                        } 
+                                        }
                                     ],
                                 },
                                 {
@@ -225,7 +225,7 @@ const root2 = {
             y: 99,
             width: 118,
             height: 118,
-            url: 'http://localhost:8082/avatar.jpg',
+            url: 'http://localhost:8080/avatar.jpg',
             borderRadius: '50%'
         },
         {
@@ -290,4 +290,4 @@ const root2 = {
     ]
 }
 
-window.root2 = root2
+export { root2 }
