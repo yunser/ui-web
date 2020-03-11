@@ -42,7 +42,7 @@ function Example(props) {
         let canvas0 = new JsCanvas(canvas, options)
         canvas0.render(newRoot)
 
-        test()
+        // test() 
     }, [])
 
     
@@ -143,6 +143,24 @@ This is Cat`,
                                     height: 100,
                                     color: '#fff',
                                     // margin: 20,
+                                }
+                            ]
+                        }} />
+
+                        <p>线</p>
+                        <Example root={{
+                            width: 400,
+                            height: 400,
+                            color: '#598cee',
+                            // padding: 20,
+                            children: [
+                                {
+                                    type: 'line',
+                                    x: 0,
+                                    y: 0,
+                                    x2: 200,
+                                    y2: 200,
+                                    color: '#f00',
                                 }
                             ]
                         }} />

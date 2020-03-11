@@ -1,50 +1,7 @@
 
 
-/**该方法用来绘制一个有填充色的圆角矩形
-     *@param cxt:canvas的上下文环境
-    *@param x:左上角x轴坐标
-    *@param y:左上角y轴坐标
-    *@param width:矩形的宽度
-    *@param height:矩形的高度
-    *@param radius:圆的半径
-    *@param fillColor:填充颜色
-**/
-function fillRoundRect(cxt, x, y, width, height, radius, /*optional*/ fillColor) {
-    //圆的直径必然要小于矩形的宽高
-    if (2 * radius > width || 2 * radius > height) { return false; }
 
-    cxt.save();
-    cxt.translate(x, y);
-    //绘制圆角矩形的各个边
-    drawRoundRectPath(cxt, width, height, radius);
-    cxt.fillStyle = fillColor || "#000"; //若是给定了值就用给定的值否则给予默认值
-    cxt.fill();
-    cxt.restore();
-}
 
-/**该方法用来绘制圆角矩形
- *@param cxt:canvas的上下文环境
-    *@param x:左上角x轴坐标
-    *@param y:左上角y轴坐标
-    *@param width:矩形的宽度
-    *@param height:矩形的高度
-    *@param radius:圆的半径
-    *@param lineWidth:线条粗细
-    *@param strokeColor:线条颜色
-    **/
-function strokeRoundRect(cxt, x, y, width, height, radius, /*optional*/ lineWidth, /*optional*/ strokeColor) {
-    //圆的直径必然要小于矩形的宽高
-    if (2 * radius > width || 2 * radius > height) { return false; }
-
-    cxt.save();
-    cxt.translate(x, y);
-    //绘制圆角矩形的各个边
-    drawRoundRectPath(cxt, width, height, radius);
-    cxt.lineWidth = lineWidth || 2; //若是给定了值就用给定的值否则给予默认值2
-    cxt.strokeStyle = strokeColor || "#000";
-    // cxt.stroke();
-    cxt.restore();
-}
 
 function drawText(context, t, x, y, w, lineHeight, opts, node) {
 
@@ -147,34 +104,6 @@ function calText(context, t, x, y, w, lineHeight, node, opts) {
     }
 }
 
-function drawRoundRectPath(cxt, width, height, radius) {
-    cxt.beginPath(0);
-    //从右下角顺时针绘制，弧度从0到1/2PI
-    cxt.arc(width - radius, height - radius, radius, 0, Math.PI / 2);
-
-    //矩形下边线
-    cxt.lineTo(radius, height);
-
-    //左下角圆弧，弧度从1/2PI到PI
-    cxt.arc(radius, height - radius, radius, Math.PI / 2, Math.PI);
-
-    //矩形左边线
-    cxt.lineTo(0, radius);
-
-    //左上角圆弧，弧度从PI到3/2PI
-    cxt.arc(radius, radius, radius, Math.PI, Math.PI * 3 / 2);
-
-    //上边线
-    cxt.lineTo(width - radius, 0);
-
-    //右上角圆弧
-    cxt.arc(width - radius, radius, radius, Math.PI * 3 / 2, Math.PI * 2);
-
-    //右边线
-    cxt.lineTo(width, height - radius);
-    cxt.closePath();
-}
-
 
 /*
     * 圆角矩形
@@ -203,10 +132,10 @@ function drawRoundedImg(ctx, bgimg, x, y, w, h, r) {
 class CanvasX {
 
     constructor(canvas, opts = {}) {
-
         this.canvas = canvas
         this.opts = opts
         this.debug = !!opts.debug
+        this.painter = this.opts.painter
     }
 
     async render(oldRoot) {
@@ -248,10 +177,118 @@ class CanvasX {
         
         let canvas = this.canvas
         let ctx = canvas.getContext('2d')
+        this.painter.setCanvas(canvas)
+        this.painter.setContext(ctx)
 
         // let root = window.root
 
         let allImage = [] // 所有的图片
+
+        // 处理布局，相对元素的位置
+        function preProcessLayout(node, parent, lastChild, selfIndex) {
+            if (node.debug) {
+                console.log('debug node', node)
+            }
+            const {
+                x,
+                y,
+            } = node
+
+            
+
+            // x
+            node._x = x
+            // console.log('测试x', x)
+            if (x === undefined) {
+                node._x = parent ? (parent._x + parent._padding.left + node._margin.left) : 0
+                // node._x = 20
+            } else if (x === 'left') {
+                // node._x = 150
+                node._x = parent ? (parent._x + parent._padding.left) : 0
+            } else if (x === 'center') {
+                node._x = parent._x + parent._width / 2 - node._width / 2
+            }
+
+            // y
+            node._y = y
+            if (y === undefined) {
+                // console.log('没有y', lastChild)
+                if (lastChild) {
+                    node._y = lastChild._y + lastChild._height + lastChild._margin.bottom + node._margin.top
+                } else {
+                    node._y = parent ? (parent._y + parent._padding.top + node._margin.top) : 0
+                }
+            }
+
+            if (parent && parent.layout === 'x') {
+                if (parent.yAlign === 'center') { // TODO 怎么用
+                    node._y = parent._y + parent._height / 2 - node._height / 2
+                } else {
+                    node._y = parent._y + parent._padding.top + node._margin.top
+                }
+                if (lastChild) {
+                    // node._x = lastChild._x + lastChild._width
+                    node._x = lastChild._x + lastChild._width + lastChild._margin.right + node._margin.right
+                } else {
+                    node._x = parent ? (parent._x + parent._padding.left + node._margin.left) : 0
+                }
+            }
+
+            if (parent && parent.layout === 'grid') {
+                const { gridSize = 3, gridHeight = 80, grid = {} } = parent
+                const { gutterX = 0, gutterY = 0 } = grid
+                let row = Math.floor(selfIndex / gridSize)
+                let col = selfIndex % gridSize
+                let gridWidth = (parent._innerWidth - gutterX * (gridSize - 1)) / gridSize
+                node._x = parent._x + parent._padding.left + col * (gridWidth + gutterX)
+                node._y = parent._y + parent._padding.top + row * (gridHeight + gutterY)
+                node._width = gridWidth
+                node._height = gridHeight
+                // node._y = parent._y + parent._height / 2 - node._height / 2
+                // if (parent.yAlign === 'center') {
+                // } else {
+                //     node._y = parent._y + parent._padding.top + node._margin.top
+                // }
+                // if (lastChild) {
+                //     // node._x = lastChild._x + lastChild._width
+                //     node._x = lastChild._x + lastChild._width + lastChild._margin.right + node._margin.right
+                // } else {
+                //     node._x = parent ? (parent._x + parent._padding.left + node._margin.left) : 0
+                // }
+            }
+
+            // 相对布局
+            if (node.relative === 'parent' && parent) {
+                console.log('处理布局', node)
+                // node._x = parent._x + parent._width
+                // node._y = parent._y + node._y
+                // calculate x
+                if (x === 'center') {
+                    node._x = parent._x + parent._width / 2 - node._width / 2
+                } else {
+                    if (node.right !== undefined) {
+                        node._x = parent._x + parent._width - node._width - node.right
+                        console.log('x', node._x)
+                    } else {
+                        node._x = parent._x + node.left
+                    }
+                }
+                // calculate y
+                if (y === 'center') {
+                    node._y = parent._y + parent._height / 2 - (node.type === 'text' ? node._oneLineHeight : node._height) / 2
+                } else {
+                    if (node.top !== undefined) {
+                        node._y = parent._y + node.top
+                    } else {
+                        node._y = parent._y + parent._height - node._height - node.bottom
+                        console.log('y', parent._y, parent._height, node._height, node.bottom)
+                    }
+                }
+            }
+
+            return node
+        }
+
         // 预处理
         function preProcess(node, parent, lastChild, selfIndex) {
             // console.log('预处理', node, parent)
@@ -530,7 +567,7 @@ class CanvasX {
             }
 
             // 文字计算行、高度
-            // 流式布局
+            // 流式布局 干嘛的？
             if (node.position === 'static') {
                 if (lastChild) { // TODO
                     node._y = lastChild._y + lastChild._height + lastChild._margin.bottom
@@ -611,35 +648,7 @@ class CanvasX {
                 }
             }
 
-            // 递归处理子元素
-            if (node.children && node.children.length) {
-                let children = node.children
-                let lastChild = null
-                for (let idx = 0; idx < children.length; idx++) {
-                    let child = node.children[idx]
-                    let _node = preProcess(child, node, lastChild, idx)
-                    if (_node.relative) {
-                        continue
-                    }
-                    if (!child.relative) { // TODO
-                        lastChild = _node
-                    }
-                    let right = _node._x + _node._width // TODO padding and margin
-                    let bottom = _node._y + _node._height // TODO padding and margin
-                    if (idx === 0) {
-                        maxRight = right
-                        maxBottom = bottom
-                    } else {
-                        if (right > maxRight) {
-                            maxRight = right
-                        }
-                        if (bottom > maxBottom) {
-                            maxBottom = bottom
-                            console.log('maxBottom node', _node)
-                        }
-                    }
-                }
-            }
+            
 
             
             if (node._height === 'auto') {
@@ -651,6 +660,19 @@ class CanvasX {
                     node._height = innerHeight + node._padding.top + node._padding.bottom
                 } else {
                     node._height = 0
+                }
+            }
+
+            // 递归处理子元素布局
+            if (node.children && node.children.length) {
+                let children = node.children
+                let lastChild = null
+                for (let idx = 0; idx < children.length; idx++) {
+                    let child = node.children[idx]
+                    let _node = preProcessLayout(child, node, lastChild, idx)
+                    if (!child.relative) { // TODO
+                        lastChild = _node
+                    }
                 }
             }
 
@@ -748,9 +770,11 @@ class CanvasX {
         ctx.width = canvasWidth
         ctx.height = canvasHeight
 
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight)
+        this.painter.setSize(root.width, root.height)
 
-        async function drawNode(node) {
+        this.painter.clear()
+
+        const drawNode = async (node) => {
             // console.log('画画', node)
             const {
                 type = 'view',
@@ -773,60 +797,63 @@ class CanvasX {
 
             if (_visible) {
                 if (type === 'view') {
-                    // console.log('画 view', node)
-                    ctx.beginPath()
+                    let style = {}
 
                     // fill
                     if (node.gradient) {
                         // gradient
-                        let grd = ctx.createLinearGradient(_x, _y, _x, _y + _height)
-                        grd.addColorStop(0, node.gradient.from)
-                        grd.addColorStop(1, node.gradient.to)
-                        ctx.fillStyle = grd
-                    } else {
+                        style.fill = {
+                            gradient: {
+                                from: node.gradient.from,
+                                to: node.gradient.to,
+                            }
+                        }
+                    } else if (node.color) {
                         // fill color
-                        ctx.fillStyle = color
+                        style.fill = {
+                            color,
+                        }
                     }
 
-                    if (borderRadius) {
-                        strokeRoundRect(ctx, _x, _y, _width, _height, borderRadius)
-                    } else {
-                        ctx.rect(_x, _y, _width, _height)
-                    }
+                    style.radius = borderRadius
+                   
                     if (color) {
-                        ctx.fill()
+                        // ctx.fill()
                     } else {
                         drawOutline = true
                     }
                     // border
                     if (node.border) {
+                        
                         const { color = '#000', width = 1 } = node.border
-                        ctx.beginPath()
-                        ctx.setLineDash([])
-                        if (borderRadius) {
-                            strokeRoundRect(ctx, _x, _y, _width, _height, borderRadius)
-                        } else {
-                            // ctx.rect(_x, _y, _width, _height)
-                            ctx.rect(_x, _y, _width, _height)
-                        }
-                        ctx.strokeStyle = node.border.color
-                        ctx.lineWidth = width
-                        ctx.fillStyle = color
-                        ctx.stroke()
-                    }
 
+                        let stroke = {
+                            color,
+                            width,
+                        }
+                       
+                        // ctx.stroke()
+                        style.stroke = stroke
+                    }
+                    // style.fill = fill
+                    this.painter.drawRect(_x, _y, _width, _height, style)
                 }
                 if (type === 'line') {
+                    let dash
                     if (node.lineStyle === 'dashed') {
-                        ctx.setLineDash([8, 8])
+                        dash = [8, 8]
                     } else {
-                        ctx.setLineDash([])
+                        dash = []
                     }
-                    // ctx.setLineDash([8, 8])
-                    ctx.beginPath()
-                    ctx.moveTo(node.x, node.y)
-                    ctx.lineTo(node.x2, node.y2)
-                    ctx.stroke()
+                    this.painter.drawLine([{x: node.x, y: node.y}, {x: node.x2, y: node.y2}], {
+                        stroke: {
+                            color: color,
+                        },
+                        fill: null,
+                        line: {
+                            dash,
+                        }
+                    })
 
                 }
                 if (type === 'image') {
@@ -918,44 +945,52 @@ class CanvasX {
                 ctx.stroke()
 
                 // padding
-                ctx.fillStyle = 'rgba(193, 195, 74, .4)'
+                let paddingStyle = {
+                    fill: {
+                        color: 'rgba(193, 195, 74, .4)'
+                    }
+                }
                 // ctx.beginPath()
                 let inTop = _y + _padding.top
                 let inBottom = _y + _height - _padding.bottom
                 // padding top
                 if (_padding.top > 0) {
-                    ctx.fillRect(_x, _y, _width, _padding.top)
+                    this.painter.drawRect(_x, _y, _width, _padding.top, paddingStyle)
                 }
                 // padding left
                 if (_padding.left > 0) {
-                    ctx.fillRect(_x, inTop, _padding.left, _innerHeight)
+                    this.painter.drawRect(_x, inTop, _padding.left, _innerHeight, paddingStyle)
                 }
                 // padding right
                 if (_padding.right > 0) {
-                    ctx.fillRect(_x + _width - _padding.right, inTop, _padding.right, _innerHeight)
+                    this.painter.drawRect(_x + _width - _padding.right, inTop, _padding.right, _innerHeight, paddingStyle)
                 }
                 // padding bottom
                 if (_padding.bottom > 0) {
-                    ctx.fillRect(_x, inBottom, _width, _padding.bottom)
+                    this.painter.drawRect(_x, inBottom, _width, _padding.bottom, paddingStyle)
                 }
 
                 // margin
-                ctx.fillStyle = 'rgba(249, 104, 157, .4)'
+                let marginStyle = {
+                    fill: {
+                        color: 'rgba(249, 104, 157, .4)'
+                    }
+                }
                 // margin top
                 if (_margin.top > 0) {
-                    ctx.fillRect(_x - _margin.left, _y - _margin.top, _width + _margin.left + _margin.top, _padding.top)
+                    this.painter.drawRect(_x - _margin.left, _y - _margin.top, _width + _margin.left + _margin.top, _padding.top, marginStyle)
                 }
                 // margin left
                 if (_margin.left > 0) {
-                    ctx.fillRect(_x - _margin.left, _y, _margin.left, _height)
+                    this.painter.drawRect(_x - _margin.left, _y, _margin.left, _height, marginStyle)
                 }
                 // margin right
                 if (_margin.right > 0) {
-                    ctx.fillRect(_x + _width, _y, _margin.left, _height)
+                    this.painter.drawRect(_x + _width, _y, _margin.left, _height, marginStyle)
                 }
                 // margin bottom
                 if (_margin.bottom > 0) {
-                    ctx.fillRect(_x - _margin.left, _y + node._height, _width + _margin.left + _margin.top, _padding.top)
+                    this.painter.drawRect(_x - _margin.left, _y + node._height, _width + _margin.left + _margin.top, _padding.top, marginStyle)
                 }
             }
 
@@ -964,11 +999,6 @@ class CanvasX {
                     await drawNode(child)
                 }
             }
-
-
-            // ctx.beginPath()
-            // ctx.fillStyle = '#f00'
-            // ctx.fillRect(32, 32, 100, 100)
         }
 
         await drawNode(root)
@@ -1005,12 +1035,6 @@ class CanvasX {
         //         _margin,
         //         _visible,
         //     } = node
-
-
-        // })
-
-        ctx.beginPath()
-        // ctx.fillRect(0, 0, 100, 100)
 
         let time = new Date().getTime() - startTime
         console.log(`耗时：${time}ms`)
