@@ -1,7 +1,8 @@
 import axios from 'axios'
-import {apiDomain} from '@/config'
+import {apiDomain} from '../config'
 // import storage from '@/util/storage'
 import cookie from './cookie'
+
 
 // axios.defaults.withCredentials = true
 

@@ -1,0 +1,15 @@
+.preview {
+    width: 375px;
+    height: 667px;
+    border: 1px solid #000;
+    overflow: hidden;
+    .canvas {
+        width: 375px;
+        height: 667px;
+    }
+}
+.examples {
+    padding: 20;
+    display: flex;
+    flex-wrap: wrap;
+}

@@ -88,6 +88,25 @@ export default function Page(props) {
                         </ListItemIcon>
                         <ListItemText primary="首页" />
                     </ListItem>
+                    <ListItem button component={Link} to="/example">
+                        <ListItemIcon>
+                            <HomeIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="示例" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/editor">
+                        <ListItemIcon>
+                            <HomeIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="编辑器" />
+                    </ListItem>
+                    
+                    <ListItem button component={Link} to="/debug">
+                        <ListItemIcon>
+                            <HomeIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="调试" />
+                    </ListItem>
                     {/* <ListItem button component="a" href="https://project.yunser.com/products/c0223e6005c411eaa34a4551ccc26d87" target="_blank">
                         <ListItemIcon>
                             <InfoIcon />

@@ -1,15 +1,5 @@
 
 
-function getImage(url) {
-    return new Promise((resolve, reject) => {
-        let img = new Image()
-        img.onload = () => {
-            resolve(img)
-        }
-        img.src = url
-    })
-}
-
 /**该方法用来绘制一个有填充色的圆角矩形
      *@param cxt:canvas的上下文环境
     *@param x:左上角x轴坐标
@@ -56,17 +46,25 @@ function strokeRoundRect(cxt, x, y, width, height, radius, /*optional*/ lineWidt
     cxt.restore();
 }
 
-function drawText(context, t, x, y, w, lineHeight, opts) {
+function drawText(context, t, x, y, w, lineHeight, opts, node) {
 
-    var chr = t.split("");
-    var temp = "";
-    var row = [];
+    let chr = t.split("");
+    let temp = "";
+    let row = [];
+
+    let measureResult = context.measureText(t)
+    let oneLineWidth = measureResult.width
+
+
+    if ((opts.originWidth || 'auto') === 'auto') {
+        w = oneLineWidth
+    }
 
     // context.font = "20px Arial";
     // context.fillStyle = "black";
     // context.textBaseline = "middle";
 
-    for (var a = 0; a < chr.length; a++) {
+    for (let a = 0; a < chr.length; a++) {
 
         if (context.measureText(temp).width < w && context.measureText(temp + (chr[a])).width <= w) {
             temp += chr[a];
@@ -80,7 +78,7 @@ function drawText(context, t, x, y, w, lineHeight, opts) {
 
     const { textAlign } = opts
 
-    for (var b = 0; b < row.length; b++) {
+    for (let b = 0; b < row.length; b++) {
         // context.fillText(row[b],x,y+(b+1)*lineHeight)
         context.textAlign = textAlign
         let textX
@@ -113,24 +111,19 @@ function drawText(context, t, x, y, w, lineHeight, opts) {
 function calText(context, t, x, y, w, lineHeight, node, opts) {
 
     let measureResult = context.measureText(t)
+
+    console.log('计算', measureResult)
     let oneLineWidth = measureResult.width
 
-    console.log('计算文本', w, measureResult)
-
-    if (w === 'auto') {
-        w = oneLineWidth
-        console.log('默认原来', oneLineWidth)
-    }
-
-    var chr = t.split("");
-    var temp = "";
-    var row = [];
+    let chr = t.split("");
+    let temp = "";
+    let row = [];
 
     // context.font = "20px Arial";
-    context.fillStyle = "black";
+    // context.fillStyle = "black";
     // context.textBaseline = "middle";
 
-    for (var a = 0; a < chr.length; a++) {
+    for (let a = 0; a < chr.length; a++) {
 
         if (context.measureText(temp).width < w && context.measureText(temp + (chr[a])).width <= w) {
             temp += chr[a];
@@ -142,7 +135,7 @@ function calText(context, t, x, y, w, lineHeight, node, opts) {
     }
     row.push(temp);
 
-    for (var b = 0; b < row.length; b++) {
+    for (let b = 0; b < row.length; b++) {
         // context.fillText(row[b],x,y+(b+1)*lineHeight)
         context.fillText(row[b], x, y + (b) * lineHeight)
     }
@@ -210,23 +203,61 @@ function drawRoundedImg(ctx, bgimg, x, y, w, h, r) {
 class CanvasX {
 
     constructor(canvas, opts = {}) {
+
         this.canvas = canvas
+        this.opts = opts
         this.debug = !!opts.debug
     }
 
-    render(root) {
-        if (!root) {
+    async render(oldRoot) {
+        if (!oldRoot) {
             throw Error('root is empty')
         }
+
+        let startTime = new Date().getTime()
+
+        let root = JSON.parse(JSON.stringify(oldRoot))
+
         let _this = this
+
+        function defaultFetImage(url) {
+            return new Promise((resolve, reject) => {
+                console.log('_this.opts', _this.opts)
+                let img = new _this.opts.Image()
+                img.onload = () => {
+                    resolve({
+                        url: url,
+                        image: img,
+                    })
+                }
+                img.onerror = err => {
+                    resolve({
+                        url: url,
+                        image: null,
+                        error: err
+                    })
+                    // throw new Error(`image load fail ${url}`)
+                }
+                img.src = url
+            })
+        }
+
+        const getImage = this.opts.getImage || defaultFetImage
+
+
+        
         let canvas = this.canvas
         let ctx = canvas.getContext('2d')
 
         // let root = window.root
 
+        let allImage = [] // 所有的图片
         // 预处理
-        function preProcess(node, parent, lastChild) {
-            console.log('预处理', node, parent)
+        function preProcess(node, parent, lastChild, selfIndex) {
+            // console.log('预处理', node, parent)
+            if (node.debug) {
+                console.log('debug node', node)
+            }
             const {
                 type = 'node',
                 color = '#999',
@@ -234,16 +265,18 @@ class CanvasX {
                 y,
                 width = 'auto',
                 height = 'auto',
-                minHeight = 0,
+                minHeight,
+                minWidth,
+                maxWidth,
+                maxHeight,
                 borderRadius = 0,
                 margin,
-                marginTop = 0,
-                marginBottom = 0,
-                marginRight = 0,
-                marginLeft = 0,
+                marginTop,
+                marginBottom,
+                marginRight,
+                marginLeft,
                 padding,
                 visible = true,
-                _parent,
 
                 textColor,
                 textSize,
@@ -291,18 +324,22 @@ class CanvasX {
                 node._height = parseInt(node._height.replace('%')) / 100 * parent._height
             }
 
-
-            node._marginBottom = marginBottom
-            node._marginRight = marginRight
-
             // margin TODO
             let _margin = margin
+            // cobns
             if (margin === undefined) {
                 _margin = {
                     top: 0,
                     right: 0,
                     bottom: 0,
                     left: 0,
+                }
+            } else if (typeof margin === 'number') {
+                _margin = {
+                    top: margin,
+                    right: margin,
+                    bottom: margin,
+                    left: margin,
                 }
             }
             node._margin = _margin
@@ -354,74 +391,122 @@ class CanvasX {
             }
             node._padding = _padding
 
+            // image type
+            if (node.type === 'image') {
+                allImage.push(node.url)
+            }
 
             // text type
             if (node.type === 'text') {
-                const { textSize, lineHeight } = node
+                const { textSize, lineHeight, textAlign } = node
+
                 // font size
-                // TODO
-
-
+                node._textSize = textSize
+                if (node._textSize === undefined) {
+                    const defaultTextSize = 12
+                    node._textSize = (parent ? parent._textSize : defaultTextSize) || defaultTextSize
+                }
 
                 // line height
                 node._lineHeight = lineHeight
                 if (node._lineHeight === undefined) {
-                    node._lineHeight = textSize
+                    node._lineHeight = node._textSize // 继承？
+                }
+
+                // text align
+                node._textAlign = textAlign
+                if (node._textAlign === undefined) {
+                    const defaultTextAlign = 'left'
+                    node._textAlign = (parent ? parent._textAlign : defaultTextAlign) || defaultTextAlign
                 }
 
                 // font family
                 // TODO
 
-                ctx.font = `${node.textSize}px Georgia`
+                ctx.font = `${node._textSize}px Georgia ${node._fontWeight}` // TODO 封装
+
                 let { textLine, textHeight, oneLineWidth, oneLineHeight } = calText(ctx, node.text, 0, 0, node._width, node._lineHeight, node, {
-                    textSize
+                    textSize: node._textSize,
+                    originWidth: width,
                 })
                 // if (line)
-                console.log('字体计算', node.text, textLine, textHeight)
+                // console.log('字体计算', node.text, textLine, textHeight)
                 node._textLine = textLine
                 node._height = textHeight
                 if (width === 'auto') {
-                    node._width = oneLineWidth + 4 // TODO hack +4 不加会换行，需要解决，否则有几个像素差
+                    node._width = oneLineWidth // TODO hack +4 不加会换行，需要解决，否则有几个像素差
                 }
 
-                node._fontWeight = node.fontWeight
+                // font weight
+                node._fontWeight = node.fontWeight || ''
+
                 node._oneLineWidth = oneLineWidth
                 node._oneLineHeight = oneLineHeight
             }
 
             // x
             node._x = x
+            // console.log('测试x', x)
             if (x === undefined) {
-                node._x = parent ? (parent._x + parent._padding.left) : 0
+                node._x = parent ? (parent._x + parent._padding.left + node._margin.left) : 0
+                // node._x = 20
             } else if (x === 'left') {
-                node._x = 150
-                // node._x = parent ? (parent._x + parent._padding.left) : 0
+                // node._x = 150
+                node._x = parent ? (parent._x + parent._padding.left) : 0
+            } else if (x === 'center') {
+                node._x = parent._x + parent._width / 2 - node._width / 2
             }
 
             // y
             node._y = y
             if (y === undefined) {
-                console.log('没有y', lastChild)
+                // console.log('没有y', lastChild)
                 if (lastChild) {
-                    node._y = lastChild._y + lastChild._height + lastChild._marginBottom
+                    node._y = lastChild._y + lastChild._height + lastChild._margin.bottom + node._margin.top
                 } else {
                     node._y = parent ? (parent._y + parent._padding.top + node._margin.top) : 0
                 }
             }
 
             if (parent && parent.layout === 'x') {
-                if (parent.yAlign === 'center') {
+                if (parent.yAlign === 'center') { // TODO 怎么用
                     node._y = parent._y + parent._height / 2 - node._height / 2
                 } else {
-                    node._y = parent._y
+                    node._y = parent._y + parent._padding.top + node._margin.top
                 }
                 if (lastChild) {
-                    node._x = lastChild._x + lastChild._width
-                    node._x = lastChild._x + lastChild._width + lastChild._marginRight
+                    // node._x = lastChild._x + lastChild._width
+                    node._x = lastChild._x + lastChild._width + lastChild._margin.right + node._margin.right
                 } else {
-                    node._x = parent ? parent._x : 0
+                    node._x = parent ? (parent._x + parent._padding.left + node._margin.left) : 0
                 }
             }
+
+            if (parent && parent.layout === 'grid') {
+                const { gridSize = 3, gridHeight = 80, grid = {} } = parent
+                const { gutterX = 0, gutterY = 0 } = grid
+                let row = Math.floor(selfIndex / gridSize)
+                let col = selfIndex % gridSize
+                let gridWidth = (parent._innerWidth - gutterX * (gridSize - 1)) / gridSize
+                node._x = parent._x + parent._padding.left + col * (gridWidth + gutterX)
+                node._y = parent._y + parent._padding.top + row * (gridHeight + gutterY)
+                node._width = gridWidth
+                node._height = gridHeight
+                // node._y = parent._y + parent._height / 2 - node._height / 2
+                // if (parent.yAlign === 'center') {
+                // } else {
+                //     node._y = parent._y + parent._padding.top + node._margin.top
+                // }
+                // if (lastChild) {
+                //     // node._x = lastChild._x + lastChild._width
+                //     node._x = lastChild._x + lastChild._width + lastChild._margin.right + node._margin.right
+                // } else {
+                //     node._x = parent ? (parent._x + parent._padding.left + node._margin.left) : 0
+                // }
+            }
+
+
+            // node._y = 40
 
 
 
@@ -448,7 +533,7 @@ class CanvasX {
             // 流式布局
             if (node.position === 'static') {
                 if (lastChild) { // TODO
-                    node._y = lastChild._y + lastChild._height + lastChild._marginBottom
+                    node._y = lastChild._y + lastChild._height + lastChild._margin.bottom
                     console.log('计算', node._y)
                 }
             }
@@ -484,7 +569,7 @@ class CanvasX {
             node._innerWidth = node._width - node._padding.left - node._padding.right
             if (node.debug) {
 
-                console.log('_innerWidth', node._innerWidth, node._width, node._padding.left, node._padding.right)
+                // console.log('_innerWidth', node._innerWidth, node._width, node._padding.left, node._padding.right)
             }
             node._innerHeight = node._height - node._padding.top - node._padding.bottom
 
@@ -494,6 +579,7 @@ class CanvasX {
             // parent
             node._parent = parent
 
+            // height auto
             let maxRight
             let maxBottom
             if (node.children && node.children.length) {
@@ -501,12 +587,15 @@ class CanvasX {
                 let lastChild = null
                 for (let idx = 0; idx < children.length; idx++) {
                     let child = node.children[idx]
-                    let _node = preProcess(child, node, lastChild)
+                    let _node = preProcess(child, node, lastChild, idx)
+                    if (_node.relative) {
+                        continue
+                    }
                     if (!child.relative) { // TODO
                         lastChild = _node
                     }
-                    let right = _node._x + _node._width
-                    let bottom = _node._y + _node._height
+                    let right = _node._x + _node._width // TODO padding and margin
+                    let bottom = _node._y + _node._height // TODO padding and margin
                     if (idx === 0) {
                         maxRight = right
                         maxBottom = bottom
@@ -516,12 +605,45 @@ class CanvasX {
                         }
                         if (bottom > maxBottom) {
                             maxBottom = bottom
+                            console.log('maxBottom node', _node)
                         }
                     }
                 }
             }
 
+            // 递归处理子元素
+            if (node.children && node.children.length) {
+                let children = node.children
+                let lastChild = null
+                for (let idx = 0; idx < children.length; idx++) {
+                    let child = node.children[idx]
+                    let _node = preProcess(child, node, lastChild, idx)
+                    if (_node.relative) {
+                        continue
+                    }
+                    if (!child.relative) { // TODO
+                        lastChild = _node
+                    }
+                    let right = _node._x + _node._width // TODO padding and margin
+                    let bottom = _node._y + _node._height // TODO padding and margin
+                    if (idx === 0) {
+                        maxRight = right
+                        maxBottom = bottom
+                    } else {
+                        if (right > maxRight) {
+                            maxRight = right
+                        }
+                        if (bottom > maxBottom) {
+                            maxBottom = bottom
+                            console.log('maxBottom node', _node)
+                        }
+                    }
+                }
+            }
+
+            
             if (node._height === 'auto') {
+                console.log('maxBottom', maxBottom)
                 if (node.children && node.children.length) {
                     let innerHeight = maxBottom - node._y - node._padding.top
                     // innerHeight = 300
@@ -532,19 +654,90 @@ class CanvasX {
                 }
             }
 
-            if (node._height < minHeight) {
+            // min width
+            if (minWidth !== undefined && node._width < minWidth) {
+                node._width = minWidth
+            }
+
+            // min height
+            if (minHeight !== undefined && node._height < minHeight) {
                 node._height = minHeight
+            }
+
+            // max width
+            if (maxWidth !== undefined && node._width > maxWidth) {
+                node._width = maxWidth
+            }
+
+            // max height
+            if (maxHeight !== undefined && node._height > maxHeight) {
+                node._height = maxHeight
             }
 
             return node
         }
 
-        let startTime = new Date().getTime()
+        
 
-        preProcess(root, null, null)
+        // 加载
+        // class ImageLoader {
 
+        //     constructor() {
+        //         this.cache = {}
+        //         this.callbacks = {}
+        //     }
+        //     async preload(url) {
+        //         // 每张图片只预加载一次
+        //         // if (!this.cache[url]) {
+        //         //     this.cache[url]
+        //         // }
+        //         this.cache[url] = 'asd'
+        //         let cache = imgCaches.find(item => item.url === )
+        //         let img = await getImage(url).catch(err => {
+        //             console.error('image err', err)
+        //             // drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
+        //             // ctx.beginPath()
+        //             // ctx.rect(_x, _y, _width, _height)
+        //             // ctx.stroke()
+        //         })
+        //         if (img) {
+        //             this.cache[url] = img
+        //             this.callbacks[url] && this.callbacks[url]()
+        //         }
+        //     }
+
+        //     async load(url, callback) {
+        //         if (this.cache[url]) {
+        //             callback(this.cache[url])
+        //         } else {
+        //             this.callbacks[url] = callback
+        //             this.preload(url)
+        //         }
+        //     }
+        // }
+        // let loader = new ImageLoader()
+        // for (let img of allImage) {
+        //     loader.preload
+        // }
+
+        
+
+        preProcess(root, null, null, undefined)
+
+        
         console.log('预处理后', root)
         // console.log('预处理后 children', root.children[0].children)
+
+        console.log('images', allImage)
+        let promises = []
+        for (let img of allImage) {
+            promises.push(getImage(img))
+        }
+        let requestStartTime = new Date().getTime()
+        let imgCaches = await Promise.all(promises)
+        console.log('imgCaches', imgCaches)
+        let requestTime = new Date().getTime() - requestStartTime
+        console.log(`图片请求耗时2：${requestTime}ms`)
 
         let canvasWidth = root.width
         let canvasHeight = root.height
@@ -570,8 +763,11 @@ class CanvasX {
                 _height,
                 _innerHeight,
                 _padding,
+                _margin,
                 _visible,
             } = node
+
+
 
             let drawOutline = false
 
@@ -635,14 +831,38 @@ class CanvasX {
                 }
                 if (type === 'image') {
                     // console.log('画 image', node)
-                    
-                    let img = await getImage(node.url)
-                    // console.log('获得图片，卡斯话', img)
-                    if (node._borderRadius) {
-                        drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
+                    let cache = imgCaches.find(item => item.url === node.url)
+                    if (cache && cache.image) {
+                        let img = cache.image
+                        console.log('cache', cache, img)
+                        if (node._borderRadius) {
+                            drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
+                        } else {
+                            ctx.drawImage(img, 0, 0, img.width, img.height, _x, _y, _width, _height)
+                        }
                     } else {
-                        ctx.drawImage(img, 0, 0, img.width, img.height, _x, _y, _width, _height)
+                        console.error('image err', cache)
+                        // drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
+                        // ctx.beginPath()
+                        // ctx.rect(_x, _y, _width, _height)
+                        // ctx.stroke()
                     }
+                    let img = await getImage(node.url).catch(err => {
+                        console.error('image err', err)
+                        // drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
+                        ctx.beginPath()
+                        ctx.rect(_x, _y, _width, _height)
+                        ctx.stroke()
+                    })
+                    // console.log('图片', img)
+                    // if (img) {
+                    //     // console.log('获得图片，卡斯话', img)
+                    //     if (node._borderRadius) {
+                    //         drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
+                    //     } else {
+                    //         ctx.drawImage(img, 0, 0, img.width, img.height, _x, _y, _width, _height)
+                    //     }
+                    // }
 
                     drawOutline = true
 
@@ -652,29 +872,16 @@ class CanvasX {
                     // ctx.stroke()
                 }
                 if (type === 'text') {
-                    const {
-                        textSize = 12,
-                        lineHeight,
-                        textAlign = 'left',
-                    } = node
-
-
-
-                    let drawLineHeight = lineHeight || (textSize * 1.6)
-                    // let height = lineHeight
-
-                    let fontWeight = node._fontWeight === 'bold' ? node._fontWeight : ''
-
                     ctx.beginPath()
                     ctx.fillStyle = node._textColor
-                    ctx.font = `${textSize}px Georgia ${fontWeight}`
+                    ctx.font = `${node._textSize}px Georgia ${node._fontWeight}`
                     ctx.textBaseline = 'top'
                     // ctx.fillText(node.text, x, y)
 
-                    // if (textAlign === 'left') {}
-                    const { line, height } = drawText(ctx, node.text, _x, _y, _width, drawLineHeight, {
-                        textAlign
-                    })
+                    const { line, height } = drawText(ctx, node.text, _x, _y, _width, node._lineHeight, {
+                        textAlign: node._textAlign,
+                        originWidth: node.width,
+                    }, node)
 
                     drawOutline = true
                 }
@@ -698,39 +905,58 @@ class CanvasX {
             }
 
             if (node.debug) {
-                console.log('debug', node)
-                // ctx.globalAlpha = .3
                 ctx.globalAlpha = 1
 
                 ctx.beginPath()
-                ctx.fillStyle = '#09c'
-                ctx.strokeStyle = '#f00'
-                ctx.lineWidth = 8
+                ctx.fillStyle = 'rgba(255, 255, 255, .4)'
+                ctx.strokeStyle = 'rgba(255, 0, 0, .4)'
+                ctx.lineWidth = 1 // TODO by border width
                 ctx.setLineDash([])
                 ctx.rect(_x, _y, _width, _height)
 
-                ctx.fill()
+                // ctx.fill()
                 ctx.stroke()
 
-
-                ctx.fillStyle = '#8BC34A'
+                // padding
+                ctx.fillStyle = 'rgba(193, 195, 74, .4)'
                 // ctx.beginPath()
                 let inTop = _y + _padding.top
                 let inBottom = _y + _height - _padding.bottom
                 // padding top
-                ctx.fillRect(_x, _y, _width, _padding.top)
-                // ctx.fill()
+                if (_padding.top > 0) {
+                    ctx.fillRect(_x, _y, _width, _padding.top)
+                }
                 // padding left
-                ctx.fillRect(_x, inTop, _padding.left, _innerHeight)
+                if (_padding.left > 0) {
+                    ctx.fillRect(_x, inTop, _padding.left, _innerHeight)
+                }
                 // padding right
-                ctx.fillRect(_x + _width - _padding.right, inTop, _padding.right, _innerHeight)
+                if (_padding.right > 0) {
+                    ctx.fillRect(_x + _width - _padding.right, inTop, _padding.right, _innerHeight)
+                }
                 // padding bottom
-                ctx.fillRect(_x, inBottom, _width, _padding.bottom)
+                if (_padding.bottom > 0) {
+                    ctx.fillRect(_x, inBottom, _width, _padding.bottom)
+                }
 
-
-
-
-                ctx.globalAlpha = 1
+                // margin
+                ctx.fillStyle = 'rgba(249, 104, 157, .4)'
+                // margin top
+                if (_margin.top > 0) {
+                    ctx.fillRect(_x - _margin.left, _y - _margin.top, _width + _margin.left + _margin.top, _padding.top)
+                }
+                // margin left
+                if (_margin.left > 0) {
+                    ctx.fillRect(_x - _margin.left, _y, _margin.left, _height)
+                }
+                // margin right
+                if (_margin.right > 0) {
+                    ctx.fillRect(_x + _width, _y, _margin.left, _height)
+                }
+                // margin bottom
+                if (_margin.bottom > 0) {
+                    ctx.fillRect(_x - _margin.left, _y + node._height, _width + _margin.left + _margin.top, _padding.top)
+                }
             }
 
             if (node.children && node.children.length) {
@@ -745,7 +971,7 @@ class CanvasX {
             // ctx.fillRect(32, 32, 100, 100)
         }
 
-        drawNode(root)
+        await drawNode(root)
 
         async function forEachNode(node, callback) {
 
@@ -790,5 +1016,13 @@ class CanvasX {
         console.log(`耗时：${time}ms`)
     }
 }
+
+// 'strict'
+
+// exports.__esModule = true
+
+// module.exports = {
+//     CanvasX,
+// }
 
 export { CanvasX }
