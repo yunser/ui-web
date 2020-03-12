@@ -134,6 +134,13 @@ class Painter {
 
     async loadImages(allImage) {
 
+        if (allImage.length === 0) {
+            this.imgCaches = []
+            return {
+                requestImageTime: 0,
+            }
+        }
+
         function getImage(url) {
             return new Promise((resolve, reject) => {
                 // console.log('_this.opts', _this.opts)

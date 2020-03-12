@@ -21,6 +21,7 @@ function Example(props) {
     const prevCountRef = useRef()
 
     const [src, setSrc] = useState('')
+    const [time, setTime] = useState({})
 
     function test() {
         console.log('newRoot', newRoot)
@@ -29,7 +30,9 @@ function Example(props) {
         })
           .then(function (response) {
             console.log(response)
-            setSrc(`${config.apiDomain}/files/${response.data}`)
+            let imgUrl = `${config.apiDomain}/files/${response.data.key}`
+            console.log('imgUrl', imgUrl)
+            setSrc(imgUrl)
             // setSrc('123')
             
           })
@@ -45,9 +48,12 @@ function Example(props) {
             debug: true,
         }
         let canvas0 = new JsCanvas(canvas, options)
-        canvas0.render(newRoot)
+        canvas0.render(newRoot).then(ret => {
+            setTime(ret)
+        })
+        
 
-        test() 
+        // test() 
     }, [])
 
     
@@ -59,6 +65,7 @@ function Example(props) {
 
     }
 
+    const timeText = JSON.stringify(time)
     return (
         <div className={classes.example}>
             <div className={classes.content}>
@@ -70,6 +77,7 @@ function Example(props) {
                 </div>
             </div>
             <button onClick={test}>服务端渲染测试</button>
+            <div>{timeText}</div>
             {!!src &&
                 <div>
                     <img className={classes.img} src={src} />
