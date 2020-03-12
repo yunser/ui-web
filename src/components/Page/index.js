@@ -88,6 +88,12 @@ export default function Page(props) {
                         </ListItemIcon>
                         <ListItemText primary="首页" />
                     </ListItem>
+                    <ListItem button component={Link} to="/doc">
+                        <ListItemIcon>
+                            <HomeIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="文档" />
+                    </ListItem>
                     <ListItem button component={Link} to="/example">
                         <ListItemIcon>
                             <HomeIcon />

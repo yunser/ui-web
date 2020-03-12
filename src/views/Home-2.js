@@ -33,7 +33,6 @@ function Example(props) {
             let imgUrl = `${config.apiDomain}/files/${response.data.key}`
             console.log('imgUrl', imgUrl)
             setSrc(imgUrl)
-            setTime(response.data.renderParam)
             // setSrc('123')
             
           })
@@ -50,7 +49,7 @@ function Example(props) {
         }
         let canvas0 = new JsCanvas(canvas, options)
         canvas0.render(newRoot).then(ret => {
-            // setTime(ret)
+            setTime(ret)
         })
         
 
@@ -107,10 +106,22 @@ This is Cat`,
         const { history } = this.props
         let state = this.state
 
-        // const { text, result, formData, rules, allRules, activeRule, addDialogVisible } = state
+        const { text, result, formData, rules, allRules, activeRule, addDialogVisible } = state
 
         return (
-            <Page title="JSON UI">
+            <Page title="JSON UI" menu={[
+                // {
+                //     label: '重置',
+                //     click() {
+                //         setState({
+                //             // count: 0,
+                //             // count2: 0,
+                //             // teamNameA: 'A',
+                //             // teamNameB: 'B',
+                //         })
+                //     }
+                // },
+            ]}>
                 <div className={classes.container}>
                     <article className="ui-article">
                         <h2>简介</h2>
@@ -125,12 +136,56 @@ This is Cat`,
                         </ul>
                         <p>目前版本是 v0.0.1。</p>
 
-                        <h2>安装</h2>
-                        <p>install。</p>
-                        
+                        <h2>示例</h2>
+                        <p>使用的单位是 px。</p>
+                        <Example root={{
+                            width: 400,
+                            height: 400,
+                            color: '#598cee',
+                            children: [
+                                {
+                                    width: 100,
+                                    height: 100,
+                                    color: '#fff',
+                                }
+                            ]
+                        }} />
+
+                        <p>width 和 height</p>
+                        <Example root={{
+                            width: 400,
+                            height: 400,
+                            color: '#598cee',
+                            // padding: 20,
+                            children: [
+                                {
+                                    width: 200,
+                                    height: 100,
+                                    color: '#fff',
+                                    // margin: 20,
+                                }
+                            ]
+                        }} />
+
+                      
+
+                        <p>image</p>
+                        <Example root={{
+                            width: 400,
+                            height: 400,
+                            color: '#fff',
+                            padding: 16,
+                            children: [
+                                {
+                                    type: 'image',
+                                    url: 'https://icons.yunser.com/icons/text.svg',
+                                    width: 100,
+                                    height: 100,
+                                }
+                            ]
+                        }} />
 
 
-                        
                     </article>
                     <div class="common-container container">
                     </div>

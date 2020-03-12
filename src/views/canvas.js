@@ -69,7 +69,7 @@ function calText(context, t, x, y, w, lineHeight, node, opts) {
 
     let measureResult = context.measureText(t)
 
-    console.log('计算', measureResult)
+    // console.log('计算', measureResult)
     let oneLineWidth = measureResult.width
 
     let chr = t.split("");
@@ -110,7 +110,7 @@ class CanvasX {
         this.canvas = canvas
         this.opts = opts
         this.debug = !!opts.debug
-        this.painter = this.opts.painter
+        this.painter = new this.opts.Painter()
     }
 
     async render(oldRoot) {
@@ -153,12 +153,9 @@ class CanvasX {
 
             // x
             node._x = x
-            // console.log('测试x', x)
             if (x === undefined) {
                 node._x = parent ? (parent._x + parent._padding.left + node._margin.left) : 0
-                // node._x = 20
             } else if (x === 'left') {
-                // node._x = 150
                 node._x = parent ? (parent._x + parent._padding.left) : 0
             } else if (x === 'center') {
                 node._x = parent._x + parent._width / 2 - node._width / 2
@@ -167,7 +164,6 @@ class CanvasX {
             // y
             node._y = y
             if (y === undefined) {
-                // console.log('没有y', lastChild)
                 if (lastChild) {
                     node._y = lastChild._y + lastChild._height + lastChild._margin.bottom + node._margin.top
                 } else {
@@ -214,18 +210,13 @@ class CanvasX {
 
             // 相对布局
             if (node.relative === 'parent' && parent) {
-                console.log('处理布局', node)
-                // node._x = parent._x + parent._width
-                // node._y = parent._y + node._y
-                // calculate x
                 if (x === 'center') {
                     node._x = parent._x + parent._width / 2 - node._width / 2
                 } else {
                     if (node.right !== undefined) {
-                        node._x = parent._x + parent._width - node._width - node.right
-                        console.log('x', node._x)
+                        node._x = parent._x + parent._width - node._width - node._right
                     } else {
-                        node._x = parent._x + node.left
+                        node._x = parent._x + node._left
                     }
                 }
                 // calculate y
@@ -233,10 +224,9 @@ class CanvasX {
                     node._y = parent._y + parent._height / 2 - (node.type === 'text' ? node._oneLineHeight : node._height) / 2
                 } else {
                     if (node.top !== undefined) {
-                        node._y = parent._y + node.top
+                        node._y = parent._y + node._top
                     } else {
-                        node._y = parent._y + parent._height - node._height - node.bottom
-                        console.log('y', parent._y, parent._height, node._height, node.bottom)
+                        node._y = parent._y + parent._height - node._height - node._bottom
                     }
                 }
             }
@@ -286,11 +276,9 @@ class CanvasX {
                 node._textSize = (parent ? parent._textSize : '') || 12
             }
 
-
             // width
             node._width = width
             if (node._width === 'auto') {
-                // console.log('auto', JSON.stringify(parent, null, 4), parent._innerWidth, parent)
                 node._width = parent ? parent._innerWidth : 999
             } else if (typeof width === 'string') {
                 // 只支持百分比的形式
@@ -314,6 +302,38 @@ class CanvasX {
                 // 只支持百分比的形式
                 // 假设父节点存在
                 node._height = parseInt(node._height.replace('%')) / 100 * parent._height
+            }
+
+            // left
+            node._left = node.left
+            if (typeof node._left === 'string') {
+                // 只支持百分比的形式
+                // 假设父节点存在
+                node._left = parseInt(node._left.replace('%')) / 100 * parent._width
+            }
+
+            // top
+            node._top = node.top
+            if (typeof node._top === 'string') {
+                // 只支持百分比的形式
+                // 假设父节点存在
+                node._top = parseInt(node._top.replace('%')) / 100 * parent._height
+            }
+
+            // right
+            node._right = node.right
+            if (typeof node._right === 'string') {
+                // 只支持百分比的形式
+                // 假设父节点存在
+                node._right = parseInt(node._right.replace('%')) / 100 * parent._width
+            }
+
+            // bottom
+            node._bottom = node.bottom
+            if (typeof node._bottom === 'string') {
+                // 只支持百分比的形式
+                // 假设父节点存在
+                node._bottom = parseInt(node._bottom.replace('%')) / 100 * parent._height
             }
 
             // margin TODO
@@ -398,6 +418,18 @@ class CanvasX {
                 }
             }
             node._padding = _padding
+            if (node.paddingTop !== undefined) {
+                node._padding.top = node.paddingTop
+            }
+            if (node.paddingRight !== undefined) {
+                node._padding.right = node.paddingRight
+            }
+            if (node.paddingBottom !== undefined) {
+                node._padding.bottom = node.paddingBottom
+            }
+            if (node.paddingLeft !== undefined) {
+                node._padding.left = node.paddingLeft
+            }
 
             // image type
             if (node.type === 'image') {
@@ -438,7 +470,6 @@ class CanvasX {
                     originWidth: width,
                 })
                 // if (line)
-                // console.log('字体计算', node.text, textLine, textHeight)
                 node._textLine = textLine
                 node._height = textHeight
                 if (width === 'auto') {
@@ -454,12 +485,9 @@ class CanvasX {
 
             // x
             node._x = x
-            // console.log('测试x', x)
             if (x === undefined) {
                 node._x = parent ? (parent._x + parent._padding.left + node._margin.left) : 0
-                // node._x = 20
             } else if (x === 'left') {
-                // node._x = 150
                 node._x = parent ? (parent._x + parent._padding.left) : 0
             } else if (x === 'center') {
                 node._x = parent._x + parent._width / 2 - node._width / 2
@@ -468,7 +496,6 @@ class CanvasX {
             // y
             node._y = y
             if (y === undefined) {
-                // console.log('没有y', lastChild)
                 if (lastChild) {
                     node._y = lastChild._y + lastChild._height + lastChild._margin.bottom + node._margin.top
                 } else {
@@ -483,7 +510,6 @@ class CanvasX {
                     node._y = parent._y + parent._padding.top + node._margin.top
                 }
                 if (lastChild) {
-                    // node._x = lastChild._x + lastChild._width
                     node._x = lastChild._x + lastChild._width + lastChild._margin.right + node._margin.right
                 } else {
                     node._x = parent ? (parent._x + parent._padding.left + node._margin.left) : 0
@@ -520,14 +546,11 @@ class CanvasX {
 
             if (node.css) {
                 let css = node.css
-                // console.log('css', css)
                 let arr = css.split('\n').map(item => item.replace(/^\s+/, '').replace(/\s+$/, '').replace(/;/, '')).filter(item => item)
                 for (let item of arr) {
-                    // console.log('item', item)
                     let kv = item.split(':')
                     let key = kv[0].replace(/^\s+/, '').replace(/\s+$/, '')
                     let value = kv[1].replace(/^\s+/, '').replace(/\s+$/, '')
-                    // console.log('key & value', key, value)
                     if (key === 'width') {
                         node.width = value.replace('px', '')
                     }
@@ -542,7 +565,7 @@ class CanvasX {
             if (node.position === 'static') {
                 if (lastChild) { // TODO
                     node._y = lastChild._y + lastChild._height + lastChild._margin.bottom
-                    console.log('计算', node._y)
+                    // console.log('计算', node._y)
                 }
             }
             // 相对布局
@@ -554,9 +577,9 @@ class CanvasX {
                     node._x = parent._x + parent._width / 2 - node._width / 2
                 } else {
                     if (node.right !== undefined) {
-                        node._x = parent._x + parent._width - node._width - node.right
+                        node._x = parent._x + parent._width - node._width - node._right
                     } else {
-                        node._x = parent._x + node.left
+                        node._x = parent._x + node._left
                     }
                 }
                 // calculate y
@@ -564,9 +587,9 @@ class CanvasX {
                     node._y = parent._y + parent._height / 2 - (node.type === 'text' ? node._oneLineHeight : node._height) / 2
                 } else {
                     if (node.top !== undefined) {
-                        node._y = parent._y + node.top
+                        node._y = parent._y + node._top
                     } else {
-                        node._y = parent._y + parent._height - node._height - node.bottom
+                        node._y = parent._y + parent._height - node._height - node._bottom
                     }
                 }
             }
@@ -613,7 +636,7 @@ class CanvasX {
                         }
                         if (bottom > maxBottom) {
                             maxBottom = bottom
-                            console.log('maxBottom node', _node)
+                            // console.log('maxBottom node', _node)
                         }
                     }
                 }
@@ -623,10 +646,8 @@ class CanvasX {
 
             
             if (node._height === 'auto') {
-                console.log('maxBottom', maxBottom)
                 if (node.children && node.children.length) {
                     let innerHeight = maxBottom - node._y - node._padding.top
-                    // innerHeight = 300
                     node._innerHeight = innerHeight
                     node._height = innerHeight + node._padding.top + node._padding.bottom
                 } else {
@@ -672,12 +693,7 @@ class CanvasX {
 
         preProcess(root, null, null, undefined)
         
-        console.log('预处理后', root)
-        // console.log('预处理后 children', root.children[0].children)
-
-        console.log('images', allImage)
-
-        
+        // console.log('预处理后', root)
 
         let { requestImageTime } = await this.painter.loadImages(allImage)
         renderParam.requestImageTime = requestImageTime

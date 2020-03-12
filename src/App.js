@@ -6,6 +6,7 @@ import Debug from './views/Debug'
 import Example from './views/Example'
 import Editor from './views/Editor'
 import Empty from './views/Empty'
+import Doc from './views/Doc'
 
 import About from './views/About'
 import Record from './views/Record'
@@ -27,6 +28,8 @@ class App extends Component {
                     <Route path="/editor" component={Editor} />
                     <Route path="/example" component={Example} />
                     <Route path="/empty" component={Empty} />
+                    <Route path="/doc" component={Doc} />
+
                     <Route path="/about" component={About} />
                     <Route path="/records" component={Record} />
                     <Route path="/renamer" component={Renamer} />

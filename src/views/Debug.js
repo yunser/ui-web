@@ -52,24 +52,26 @@ export default class Home extends React.Component {
         // const { text, result, formData, rules, allRules, activeRule, addDialogVisible } = state
 
         const root = {
-            "width": 400,
-            "height": 400,
-            "color": "#598cee",
-            "children": [
+            width: 400,
+            height: 400,
+            color: '#598cee',
+            children: [
                 {
-                    "width": 100,
-                    "height": 100,
-                    "color": "#fff",
-                    "borderRadius": 24,
-                    "border": {
-                        "color": "#000",
-                        "width": 2,
-                        "dash": [
-                            8,
-                            8
-                        ]
-                    }
-                }
+                    relative: 'parent',
+                    left: '50%',
+                    top: '50%',
+                    width: 200,
+                    height: 200,
+                    color: '#fff',
+                },
+                {
+                    relative: 'parent',
+                    right: '50%',
+                    bottom: '50%',
+                    width: 200,
+                    height: 200,
+                    color: '#f00',
+                },
             ]
         }
 

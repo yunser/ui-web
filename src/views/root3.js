@@ -116,6 +116,7 @@ function getRoot3(data = {
                                 width: '100%',
                                 textColor: '#434861',
                                 textSize: 64,
+                                lineHeight: 64 * 1.6,
                             },
                         ]
                     },
@@ -130,6 +131,7 @@ function getRoot3(data = {
                                 width: '100%',
                                 textColor: '#666',
                                 textSize: 40,
+                                lineHeight: 40 * 1.6,
                             },
                         ]
                     },
