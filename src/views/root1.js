@@ -5,9 +5,11 @@ function getRoot1(data = {
     rewardType: '成功奖励',
     rewardContent: '如果做到了，你将有机会获得1888元红包',
     avatar: 'https://weya-lxy-static.oss-cn-beijing.aliyuncs.com/canvas/avatar.jpg',
-    goalTitle: '2020年不能荒废，至少要读30本书并做读书笔记',
+    goalTitle: '2020年不能荒废，至少要读30本书并做读书笔记。',
+    // goalTitle: '2020年不能荒废，至少要读30本书并做读书笔记。2020年不能荒废，至少要读30本书并做读书笔记',
     list: [
-        '坚持10天读完一本书，坚持10天读完一本书，坚持10天读完一本书',
+        '坚持10天读完一本书',
+        // '坚持10天读完一本书，坚持10天读完一本书，坚持10天读完一本书',
         '坚持写读书笔记',
         '这是第三条',
         // '这是第四条',
@@ -26,23 +28,20 @@ function getRoot1(data = {
     let bodyContent = [
         // title box
         {
-            debug: true,
-            height: 188, // TODO auto
+            marginBottom: 63,
+            // debug: true,
+            // height: 188, // TODO auto
             children: [
                 {
                     type: 'text',
                     text: data.goalTitle,
                     marginLeft: 37,
                     marginTop: 37,
-                    // x: 93,
-                    // y: 486,
                     width: 610,
-                    // height: 128,
                     color: '#000000',
                     borderRadius: 20,
                     textSize: 50,
                     lineHeight: 84,
-                    marginBottom: 63,
                 },
                 // 标题框 left
                 {
@@ -96,21 +95,21 @@ function getRoot1(data = {
             // strong: '#f00',
             children: [
                 {
+                    relative: 'parent',
+                    left: -4,
+                    top: 26,
+                    width: 154,
+                    height: 15,
+                    color: 'rgba(249, 138, 95, 1)',
+                },
+                {
                     type: 'text',
                     text: '挑战内容',
                     width: 285,
                     color: 'rgba(0, 0, 0, 0.85)',
                     textSize: 36,
-                    lineHeight: 84,
+                    // lineHeight: 84,
                     fontWeight: 'bold',
-                },
-                {
-                    relative: 'parent',
-                    left: 0,
-                    bottom: 0,
-                    width: 154,
-                    height: 15,
-                    color: 'rgba(249, 138, 95, 1)',
                 },
             ],
         },
@@ -126,6 +125,7 @@ function getRoot1(data = {
             textSize: 50,
             lineHeight: 84,
             marginBottom: 72,
+            minHeight: 270,
             children: data.list.map(item => {
                 return {
                     // width: 300,
@@ -154,6 +154,54 @@ function getRoot1(data = {
                     ]
                 }
             })
+        },
+        // footer
+        {
+            // x: 32,
+            // y: 1159,
+            width: 686,
+            height: 102,
+            // border: {
+            //     color: '#f00'
+            // },
+            children: [
+                // 二维码
+                {
+                    type: 'image',
+                    relative: 'parent',
+                    top: 0,
+                    right: 46,
+                    width: 102,
+                    height: 102,
+                    url: data.qrcode,
+                },
+                {
+                    type: 'text',
+                    relative: 'parent',
+                    text: '长按识别小程序码',
+                    top: 21,
+                    right: 170,
+                    width: 610,
+                    borderRadius: 20,
+                    textSize: 24,
+                    lineHeight: 33,
+                    textAlign: 'right',
+                    textColor: 'rgba(0, 0, 0, 0.45)',
+                },
+                {
+                    type: 'text',
+                    relative: 'parent',
+                    text: '立下我的flag',
+                    top: 68,
+                    right: 170,
+                    width: 610,
+                    borderRadius: 20,
+                    textSize: 24,
+                    lineHeight: 33,
+                    textAlign: 'right',
+                    textColor: 'rgba(0, 0, 0, 0.45)',
+                },
+            ]
         },
     ]
     const root1 = {
@@ -185,7 +233,7 @@ function getRoot1(data = {
                 // x: 32,
                 // y: 34,
                 width: 686,
-                minHeight: 1264,
+                // minHeight: 1264,
                 color: 'rgba(255,255,255,.95)',
                 borderRadius: 8,
                 // debug: true,
@@ -327,54 +375,7 @@ function getRoot1(data = {
             //     }
             //     // color: '#396',
             // },
-            // footer
-            {
-                x: 32,
-                y: 1159,
-                width: 686,
-                height: 102,
-                // border: {
-                //     color: '#f00'
-                // },
-                children: [
-                    // 二维码
-                    {
-                        type: 'image',
-                        relative: 'parent',
-                        top: 0,
-                        right: 46,
-                        width: 102,
-                        height: 102,
-                        url: data.qrcode,
-                    },
-                    {
-                        type: 'text',
-                        relative: 'parent',
-                        text: '长按识别小程序码',
-                        top: 21,
-                        right: 170,
-                        width: 610,
-                        borderRadius: 20,
-                        textSize: 24,
-                        lineHeight: 33,
-                        textAlign: 'right',
-                        textColor: 'rgba(0, 0, 0, 0.45)',
-                    },
-                    {
-                        type: 'text',
-                        relative: 'parent',
-                        text: '立下我的flag',
-                        top: 68,
-                        right: 170,
-                        width: 610,
-                        borderRadius: 20,
-                        textSize: 24,
-                        lineHeight: 33,
-                        textAlign: 'right',
-                        textColor: 'rgba(0, 0, 0, 0.45)',
-                    },
-                ]
-            },
+            
 
         ]
     }

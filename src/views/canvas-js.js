@@ -52,6 +52,29 @@ function fillRoundRect(cxt, x, y, width, height, radius, /*optional*/ fillColor)
     cxt.restore();
 }
 
+/*
+    * 圆角矩形
+    * @parama int/float x            矩形位置x坐标
+    * @parama int/float y            矩形位置y坐标
+    * @parama int/float w            矩形宽度
+    * @parama int/float h            矩形高度
+    * @parama int/float r            圆角半径
+    * @parama object <img>           矩形背景图
+    */
+   function drawRoundedImg(ctx, bgimg, x, y, w, h, r) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.stroke();
+    ctx.clip();
+    ctx.drawImage(bgimg, x, y, w, h);
+    ctx.restore();
+    ctx.closePath();
+}
 
 /**该方法用来绘制圆角矩形
  *@param cxt:canvas的上下文环境
@@ -90,6 +113,8 @@ class Painter {
     setSize(width, height) {
         this.canvasWidth = width
         this.canvasHeight = height
+        this.ctx.width = width
+        this.ctx.height = height
     }
 
     clear() {
@@ -107,6 +132,69 @@ class Painter {
         ctx.stroke()
     }
 
+    async loadImages(allImage) {
+
+        function getImage(url) {
+            return new Promise((resolve, reject) => {
+                // console.log('_this.opts', _this.opts)
+                let img = new window.Image()
+                img.onload = () => {
+                    resolve({
+                        url: url,
+                        image: img,
+                    })
+                }
+                img.onerror = err => {
+                    resolve({
+                        url: url,
+                        image: null,
+                        error: err
+                    })
+                    // throw new Error(`image load fail ${url}`)
+                }
+                img.src = url
+            })
+        }
+
+        // const getImage = this.opts.getImage || defaultFetImage
+
+        let promises = []
+        for (let img of allImage) {
+            promises.push(getImage(img))
+        }
+        let requestStartTime = new Date().getTime()
+        let imgCaches = await Promise.all(promises)
+        console.log('imgCaches', imgCaches)
+        let requestTime = new Date().getTime() - requestStartTime
+        console.log(`图片请求耗时2：${requestTime}ms`)
+        this.imgCaches = imgCaches
+
+        return {
+            requestImageTime: requestTime,
+        }
+    }
+
+    drawImage(url, x, y, width, height, style) {
+        const { ctx } = this
+        let cache = this.imgCaches.find(item => item.url === url)
+        if (cache && cache.image) {
+            let img = cache.image
+            console.log('cache', cache, img)
+            if (style.radius) {
+                drawRoundedImg(ctx, img, x, y, width, height, style.radius)
+            } else {
+                ctx.drawImage(img, 0, 0, img.width, img.height, x, y, width, height)
+            }
+            // this.painter.drawImage()
+        } else {
+            console.error('image err', cache)
+            // drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
+            // ctx.beginPath()
+            // ctx.rect(_x, _y, _width, _height)
+            // ctx.stroke()
+        }
+    }
+
     drawRect(x, y, width, height, style) {
         const { ctx } = this
         // const styleLine = style.line || {}
@@ -119,27 +207,28 @@ class Painter {
         const { fill, stroke } = style
 
         ctx.beginPath()
-        // ctx.rect(x, y, width, height)
+        if (style.radius) {
+            strokeRoundRect(ctx, x, y, width, height, style.radius)
+        } else {
+            ctx.rect(x, y, width, height)
+        }
         if (fill) {
             if (fill.gradient) {
                 let grd = ctx.createLinearGradient(x, y, x, y + height)
                 grd.addColorStop(0, fill.gradient.from)
                 grd.addColorStop(1, fill.gradient.to)
 
-                fill.gradient = grd
-                // ctx.fillStyle = fill.gradient
+                // fill.gradient = grd
+                ctx.fillStyle = grd
             } else {
                 ctx.fillStyle = fill.color
             }
-            if (style.radius) {
-                strokeRoundRect(ctx, x, y, width, height, style.radius)
-            } else {
-                ctx.rect(x, y, width, height)
-            }
+            
             ctx.fill()
         }
         if (stroke) {
-            ctx.setLineDash([]) // TODO
+            console.log('画边框', stroke)
+            ctx.setLineDash(stroke.dash || []) // TODO
             ctx.strokeStyle = stroke.color || '#000'
             ctx.lineWidth = stroke.width || 1
             ctx.stroke()
@@ -153,7 +242,7 @@ class JsCanvas extends CanvasX {
         super(canvas, {
             ...options,
             Image: window.Image,
-            debug: true,
+            debug: false,
             painter: new Painter()
         })
     }

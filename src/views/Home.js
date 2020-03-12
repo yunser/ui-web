@@ -6,6 +6,9 @@ import { JsCanvas } from './canvas-js'
 // import { root2 } from './root'
 import http from '../util/http'
 import config from '../config'
+import { add } from '../core'
+
+console.log('add', add(1, 2))
 
 function Example(props) {
     const { root } = props
@@ -21,7 +24,9 @@ function Example(props) {
 
     function test() {
         console.log('newRoot', newRoot)
-        http.post('/service', root)
+        http.post('/service', {
+            root,
+        })
           .then(function (response) {
             console.log(response)
             setSrc(`${config.apiDomain}/files/${response.data}`)
@@ -42,7 +47,7 @@ function Example(props) {
         let canvas0 = new JsCanvas(canvas, options)
         canvas0.render(newRoot)
 
-        // test() 
+        test() 
     }, [])
 
     
@@ -64,7 +69,7 @@ function Example(props) {
                     <canvas ref={myRef}></canvas>
                 </div>
             </div>
-            <button onClick={test}>测试</button>
+            <button onClick={test}>服务端渲染测试</button>
             {!!src &&
                 <div>
                     <img className={classes.img} src={src} />
@@ -112,12 +117,19 @@ This is Cat`,
                 <div className={classes.container}>
                     <article className="ui-article">
                         <h2>简介</h2>
-                        <p>JSON UI 是一套用 JSON 描述 UI 的解决方案。设计这套解决方案的目的是，提供一个 UI 描述标准，
-                            为不同的 UI 设计语言和工具提供一个中间层转换工具，便于相互转换。
+                        <p>JSON UI 是一套用 JSON 描述 UI 的解决方案。设计这套解决方案的目的是：
                         </p>
+                        <ul>
+                            <li>提供一个静态 UI 描述标准。</li>
+                            <li>一套代码，多端渲染（目前仅支持前端，NodeJs，近期会支持小程序和 SVG），可以根据业务选择不同的渲染方式。</li>
+                            <li>支持多种布局方式，告别绝对布局，轻松设计界面。</li>
+
+                            <li>为不同的 UI 设计语言和工具提供一个中间层转换工具，便于相互转换。</li>
+                        </ul>
                         <p>目前版本是 v0.0.1。</p>
 
                         <h2>示例</h2>
+                        <p>使用的单位是 px。</p>
                         <Example root={{
                             width: 400,
                             height: 400,
@@ -147,6 +159,22 @@ This is Cat`,
                             ]
                         }} />
 
+                        <p>width 和 height 百分比</p>
+                        <Example root={{
+                            width: 400,
+                            height: 400,
+                            color: '#598cee',
+                            // padding: 20,
+                            children: [
+                                {
+                                    width: '50%',
+                                    height: '50%',
+                                    color: '#fff',
+                                    // margin: 20,
+                                }
+                            ]
+                        }} />
+
                         <p>线</p>
                         <Example root={{
                             width: 400,
@@ -160,12 +188,13 @@ This is Cat`,
                                     y: 0,
                                     x2: 200,
                                     y2: 200,
-                                    color: '#f00',
+                                    color: '#fff',
                                 }
                             ]
                         }} />
 
                         <p>颜色</p>
+                        <p>支持 hex、rgb、rgba</p>
                         <Example root={{
                             width: 400,
                             height: 400,
@@ -190,6 +219,7 @@ This is Cat`,
                         }} />
 
                         <p>borderRadius</p>
+                        <p>圆角，默认 0</p>
                         <Example root={{
                             width: 400,
                             height: 400,
@@ -205,6 +235,8 @@ This is Cat`,
                         }} />
 
                         <p>border</p>
+                        <p>边框</p>
+                        <p>border.color：边框颜色，border.width：边框宽度，默认 1，order.dash 虚线设置，默认 []</p>
                         <Example root={{
                             width: 400,
                             height: 400,
@@ -218,6 +250,7 @@ This is Cat`,
                                     border: {
                                         color: '#000',
                                         width: 2,
+                                        dash: [8, 8],
                                     }
                                 }
                             ]
@@ -532,6 +565,42 @@ This is Cat`,
                             ]
                         }} />
 
+                        <p>box paddinng：</p>
+                        <Example root={{
+                            width: 400,
+                            height: 400,
+                            color: '#598cee',
+                            padding: 16,
+                            children: [
+                                {
+                                    padding: [10, 20, 30, 40],
+                                    // margin: 16,
+                                    width: 100,
+                                    height: 100,
+                                    color: '#fff',
+                                    debug: true,
+                                },
+                            ]
+                        }} />
+
+                        <p>box only margin：</p>
+                        <Example root={{
+                            width: 400,
+                            height: 400,
+                            color: '#598cee',
+                            padding: 16,
+                            children: [
+                                {
+                                    // padding: 16,
+                                    margin: [10, 20, 30, 40],
+                                    width: 100,
+                                    height: 100,
+                                    color: '#fff',
+                                    debug: true,
+                                },
+                            ]
+                        }} />
+
                         <p>minWidth and minHeight：</p>
                         <Example root={{
                             width: 400,
@@ -679,6 +748,56 @@ This is Cat`,
                                     color: '#fff',
                                     debug: true,
                                     // margin: 20,
+                                }
+                            ]
+                        }} />
+
+                        <p>height auto</p>
+                        <Example root={{
+                            width: 400,
+                            height: 400,
+                            color: '#f00',
+                            children: [
+                                {
+                                    relative: 'parent',
+                                    left: 80,
+                                    top: 80,
+                                    width: 164,
+                                    padding: 16,
+                                    color: '#fff',
+                                    debug: true,
+                                    children: [
+                                        {
+                                            width: 100,
+                                            height: 100,
+                                            margin: 16,
+                                            debug: true,
+                                            color: '#333',
+                                        },
+                                        {
+                                            width: 100,
+                                            height: 100,
+                                            margin: 16,
+                                            debug: true,
+                                            color: '#666',
+                                        },
+                                        {
+                                            relative: 'parent',
+                                            top: 0,
+                                            left: 0,
+                                            width: 16,
+                                            height: 16,
+                                            color: '#09c',
+                                        },
+                                        {
+                                            relative: 'parent',
+                                            right: 0,
+                                            bottom: 0,
+                                            width: 16,
+                                            height: 16,
+                                            color: '#09c',
+                                        },
+                                    ]
                                 }
                             ]
                         }} />

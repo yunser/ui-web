@@ -104,31 +104,6 @@ function calText(context, t, x, y, w, lineHeight, node, opts) {
     }
 }
 
-
-/*
-    * 圆角矩形
-    * @parama int/float x            矩形位置x坐标
-    * @parama int/float y            矩形位置y坐标
-    * @parama int/float w            矩形宽度
-    * @parama int/float h            矩形高度
-    * @parama int/float r            圆角半径
-    * @parama object <img>           矩形背景图
-    */
-function drawRoundedImg(ctx, bgimg, x, y, w, h, r) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(x+r,y);
-    ctx.arcTo(x+w,y,x+w,y+h,r);
-    ctx.arcTo(x+w,y+h,x,y+h,r);
-    ctx.arcTo(x,y+h,x,y,r);
-    ctx.arcTo(x,y,x+w,y,r);
-    ctx.stroke();
-    ctx.clip();
-    ctx.drawImage(bgimg, x, y, w, h);
-    ctx.restore();
-    ctx.closePath();
-}
-
 class CanvasX {
 
     constructor(canvas, opts = {}) {
@@ -139,6 +114,8 @@ class CanvasX {
     }
 
     async render(oldRoot) {
+        let renderParam = {}
+
         if (!oldRoot) {
             throw Error('root is empty')
         }
@@ -149,29 +126,7 @@ class CanvasX {
 
         let _this = this
 
-        function defaultFetImage(url) {
-            return new Promise((resolve, reject) => {
-                console.log('_this.opts', _this.opts)
-                let img = new _this.opts.Image()
-                img.onload = () => {
-                    resolve({
-                        url: url,
-                        image: img,
-                    })
-                }
-                img.onerror = err => {
-                    resolve({
-                        url: url,
-                        image: null,
-                        error: err
-                    })
-                    // throw new Error(`image load fail ${url}`)
-                }
-                img.src = url
-            })
-        }
-
-        const getImage = this.opts.getImage || defaultFetImage
+        
 
 
         
@@ -378,6 +333,22 @@ class CanvasX {
                     bottom: margin,
                     left: margin,
                 }
+            } else if (Array.isArray(margin)) {
+                if (margin.length === 2) {
+                    _margin = {
+                        top: margin[0],
+                        right: margin[1],
+                        bottom: margin[0],
+                        left: margin[1],
+                    }
+                } else if (margin.length === 4) {
+                    _margin = {
+                        top: margin[0],
+                        right: margin[1],
+                        bottom: margin[2],
+                        left: margin[3],
+                    }
+                }
             }
             node._margin = _margin
             if (marginTop !== undefined) {
@@ -471,7 +442,7 @@ class CanvasX {
                 node._textLine = textLine
                 node._height = textHeight
                 if (width === 'auto') {
-                    node._width = oneLineWidth // TODO hack +4 不加会换行，需要解决，否则有几个像素差
+                    node._width = oneLineWidth
                 }
 
                 // font weight
@@ -631,8 +602,8 @@ class CanvasX {
                     if (!child.relative) { // TODO
                         lastChild = _node
                     }
-                    let right = _node._x + _node._width // TODO padding and margin
-                    let bottom = _node._y + _node._height // TODO padding and margin
+                    let right = _node._x + _node._width + _node._margin.right
+                    let bottom = _node._y + _node._height + _node._margin.bottom
                     if (idx === 0) {
                         maxRight = right
                         maxBottom = bottom
@@ -699,67 +670,17 @@ class CanvasX {
             return node
         }
 
-        
-
-        // 加载
-        // class ImageLoader {
-
-        //     constructor() {
-        //         this.cache = {}
-        //         this.callbacks = {}
-        //     }
-        //     async preload(url) {
-        //         // 每张图片只预加载一次
-        //         // if (!this.cache[url]) {
-        //         //     this.cache[url]
-        //         // }
-        //         this.cache[url] = 'asd'
-        //         let cache = imgCaches.find(item => item.url === )
-        //         let img = await getImage(url).catch(err => {
-        //             console.error('image err', err)
-        //             // drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
-        //             // ctx.beginPath()
-        //             // ctx.rect(_x, _y, _width, _height)
-        //             // ctx.stroke()
-        //         })
-        //         if (img) {
-        //             this.cache[url] = img
-        //             this.callbacks[url] && this.callbacks[url]()
-        //         }
-        //     }
-
-        //     async load(url, callback) {
-        //         if (this.cache[url]) {
-        //             callback(this.cache[url])
-        //         } else {
-        //             this.callbacks[url] = callback
-        //             this.preload(url)
-        //         }
-        //     }
-        // }
-        // let loader = new ImageLoader()
-        // for (let img of allImage) {
-        //     loader.preload
-        // }
-
-        
-
         preProcess(root, null, null, undefined)
-
         
         console.log('预处理后', root)
         // console.log('预处理后 children', root.children[0].children)
 
         console.log('images', allImage)
-        let promises = []
-        for (let img of allImage) {
-            promises.push(getImage(img))
-        }
-        let requestStartTime = new Date().getTime()
-        let imgCaches = await Promise.all(promises)
-        console.log('imgCaches', imgCaches)
-        let requestTime = new Date().getTime() - requestStartTime
-        console.log(`图片请求耗时2：${requestTime}ms`)
+
+        
+
+        let { requestImageTime } = await this.painter.loadImages(allImage)
+        renderParam.requestImageTime = requestImageTime
 
         let canvasWidth = root.width
         let canvasHeight = root.height
@@ -767,8 +688,7 @@ class CanvasX {
         canvas.height = canvasHeight
         // canvas.setAttribute('width', '' + canvasWidth)
         // canvas.setAttribute('height', '' + canvasHeight)
-        ctx.width = canvasWidth
-        ctx.height = canvasHeight
+        
 
         this.painter.setSize(root.width, root.height)
 
@@ -818,24 +738,19 @@ class CanvasX {
                     style.radius = borderRadius
                    
                     if (color) {
-                        // ctx.fill()
                     } else {
                         drawOutline = true
                     }
                     // border
                     if (node.border) {
-                        
-                        const { color = '#000', width = 1 } = node.border
-
+                        const { color = '#000', width = 1, dash = [] } = node.border
                         let stroke = {
                             color,
                             width,
+                            dash,
                         }
-                       
-                        // ctx.stroke()
                         style.stroke = stroke
                     }
-                    // style.fill = fill
                     this.painter.drawRect(_x, _y, _width, _height, style)
                 }
                 if (type === 'line') {
@@ -857,46 +772,10 @@ class CanvasX {
 
                 }
                 if (type === 'image') {
-                    // console.log('画 image', node)
-                    let cache = imgCaches.find(item => item.url === node.url)
-                    if (cache && cache.image) {
-                        let img = cache.image
-                        console.log('cache', cache, img)
-                        if (node._borderRadius) {
-                            drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
-                        } else {
-                            ctx.drawImage(img, 0, 0, img.width, img.height, _x, _y, _width, _height)
-                        }
-                    } else {
-                        console.error('image err', cache)
-                        // drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
-                        // ctx.beginPath()
-                        // ctx.rect(_x, _y, _width, _height)
-                        // ctx.stroke()
-                    }
-                    let img = await getImage(node.url).catch(err => {
-                        console.error('image err', err)
-                        // drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
-                        ctx.beginPath()
-                        ctx.rect(_x, _y, _width, _height)
-                        ctx.stroke()
+                    this.painter.drawImage(node.url, _x, _y, _width, _height, {
+                        radius: node._borderRadius
                     })
-                    // console.log('图片', img)
-                    // if (img) {
-                    //     // console.log('获得图片，卡斯话', img)
-                    //     if (node._borderRadius) {
-                    //         drawRoundedImg(ctx, img, _x, _y, _width, _height, node._borderRadius)
-                    //     } else {
-                    //         ctx.drawImage(img, 0, 0, img.width, img.height, _x, _y, _width, _height)
-                    //     }
-                    // }
-
                     drawOutline = true
-
-                    // ctx.beginPath()
-                    // ctx.setLineDash([8, 8])
-                    // ctx.rect(_x, y, width, height)
-                    // ctx.stroke()
                 }
                 if (type === 'text') {
                     ctx.beginPath()
@@ -915,34 +794,31 @@ class CanvasX {
             }
 
             if (_this.debug) {
-                ctx.strokeStyle = '#999'
-                ctx.lineWidth = 1
-                ctx.beginPath()
-                ctx.setLineDash([8, 8])
-                ctx.rect(_x, _y, _width, _height)
-                ctx.stroke()
+                this.painter.drawRect(_x, _y, _width, _height, {
+                    stroke: {
+                        color: '#999',
+                        dash: [8, 8]
+                    }
+                })
             }
             if (node.strong) {
-                ctx.beginPath()
-                ctx.strokeStyle = node.strong
-                ctx.lineWidth = 8
-                ctx.setLineDash([])
-                ctx.rect(_x, _y, _width, _height)
-                ctx.stroke()
+                this.painter.drawRect(_x, _y, _width, _height, {
+                    stroke: {
+                        color: node.strong,
+                        width: 8,
+                    }
+                })
             }
 
+            // draw box for debug
             if (node.debug) {
-                ctx.globalAlpha = 1
-
-                ctx.beginPath()
-                ctx.fillStyle = 'rgba(255, 255, 255, .4)'
-                ctx.strokeStyle = 'rgba(255, 0, 0, .4)'
-                ctx.lineWidth = 1 // TODO by border width
-                ctx.setLineDash([])
-                ctx.rect(_x, _y, _width, _height)
-
-                // ctx.fill()
-                ctx.stroke()
+                // border
+                this.painter.drawRect(_x, _y, _width, _height, {
+                    stroke: {
+                        color: 'rgba(255, 0, 0, .4)',
+                        width: 1, // TODO by border width
+                    }
+                })
 
                 // padding
                 let paddingStyle = {
@@ -950,7 +826,6 @@ class CanvasX {
                         color: 'rgba(193, 195, 74, .4)'
                     }
                 }
-                // ctx.beginPath()
                 let inTop = _y + _padding.top
                 let inBottom = _y + _height - _padding.bottom
                 // padding top
@@ -978,7 +853,7 @@ class CanvasX {
                 }
                 // margin top
                 if (_margin.top > 0) {
-                    this.painter.drawRect(_x - _margin.left, _y - _margin.top, _width + _margin.left + _margin.top, _padding.top, marginStyle)
+                    this.painter.drawRect(_x - _margin.left, _y - _margin.top, _width + _margin.left + _margin.right, _margin.top, marginStyle)
                 }
                 // margin left
                 if (_margin.left > 0) {
@@ -986,11 +861,11 @@ class CanvasX {
                 }
                 // margin right
                 if (_margin.right > 0) {
-                    this.painter.drawRect(_x + _width, _y, _margin.left, _height, marginStyle)
+                    this.painter.drawRect(_x + _width, _y, _margin.right, _height, marginStyle)
                 }
                 // margin bottom
                 if (_margin.bottom > 0) {
-                    this.painter.drawRect(_x - _margin.left, _y + node._height, _width + _margin.left + _margin.top, _padding.top, marginStyle)
+                    this.painter.drawRect(_x - _margin.left, _y + node._height, _width + _margin.left + _margin.right, _margin.bottom, marginStyle)
                 }
             }
 
@@ -1038,15 +913,11 @@ class CanvasX {
 
         let time = new Date().getTime() - startTime
         console.log(`耗时：${time}ms`)
+
+        renderParam.totalTime = time
+
+        return renderParam
     }
 }
-
-// 'strict'
-
-// exports.__esModule = true
-
-// module.exports = {
-//     CanvasX,
-// }
 
 export { CanvasX }

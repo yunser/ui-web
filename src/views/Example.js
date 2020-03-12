@@ -63,18 +63,18 @@ export default class Home extends React.Component {
                             {/* <div className={classes.item}>
                                 <JsonUi root={root9} />
                             </div> */}
-                            <div className={classes.item}>
+                            {/* <div className={classes.item}>
                                 <JsonUi root={root0} />
-                            </div>
-                            <div className={classes.item}>
+                            </div> */}
+                            {/* <div className={classes.item}>
                                 <JsonUi root={getRoot1()} />
-                            </div>
+                            </div> */}
                             <div className={classes.item}>
                                 <JsonUi root={getRoot2()} />
                             </div>
-                            <div className={classes.item}>
+                            {/* <div className={classes.item}>
                                 <JsonUi root={getRoot3()} />
-                            </div>
+                            </div> */}
                         </div>
 
                     </div>

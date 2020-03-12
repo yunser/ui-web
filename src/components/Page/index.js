@@ -107,6 +107,20 @@ export default function Page(props) {
                         </ListItemIcon>
                         <ListItemText primary="调试" />
                     </ListItem>
+
+                    <ListItem button component={Link} to="/empty">
+                        <ListItemIcon>
+                            <HomeIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="空页面" />
+                    </ListItem>
+
+                    <ListItem button component={'a'} href="https://github.com/yunser/json-ui-home" target="_blank">
+                        <ListItemIcon>
+                            <HomeIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Github" />
+                    </ListItem>
                     {/* <ListItem button component="a" href="https://project.yunser.com/products/c0223e6005c411eaa34a4551ccc26d87" target="_blank">
                         <ListItemIcon>
                             <InfoIcon />

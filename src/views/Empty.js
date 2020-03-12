@@ -6,37 +6,6 @@ import Page from '../components/Page'
 import { JsCanvas } from './canvas-js'
 // import { hello } from '@yunser/hello'
 
-function Example(props) {
-    const { root } = props
-
-    let myRef = React.createRef()
-    const prevCountRef = useRef()
-
-    useEffect(() => {
-        let canvas = myRef.current
-        // console.log('canvas', myRef)
-        let options = {
-            // debug: true,
-        }
-        let canvas0 = new JsCanvas(canvas, options)
-        canvas0.render(root)
-
-    }, [])
-
-    return (
-        <div className={classes.example}>
-            <div className={classes.codeBox}>
-                <code className={classes.code}><pre>{JSON.stringify(root, null, 4)}</pre></code>
-            </div>
-
-            <div className={classes.preview}>
-                <canvas ref={myRef}></canvas>
-            </div>
-
-        </div>
-    )
-}
-
 
 export default class Home extends React.Component {
     state = {
@@ -74,13 +43,13 @@ export default class Home extends React.Component {
         }
 
         return (
-            <Page title="调试">
+            <Page title="空页面">
                 <div className={classes.container}>
                     {/* <div className={classes.box}>
                         <div className={classes.text}>这是一段长长的文本这是一段长长的文本</div>
                     </div> */}
                     <div class="common-container container">
-                        <Example root={root} />
+                        1334
                     </div>
                 </div>
             </Page>

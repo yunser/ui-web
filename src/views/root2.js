@@ -6,6 +6,7 @@ function getRoot2(data = {
     percent: 12,
     day: 35,
     qrcode: 'https://weya-lxy-static.oss-cn-beijing.aliyuncs.com/canvas/qrcode.png',
+    qrcode: 'https://weya-lxy-static.oss-cn-beijing.aliyuncs.com/canvas/qrcode.png',
     bg: 'https://weya-lxy-static.oss-cn-beijing.aliyuncs.com/canvas/mark_bg.jpg',
 }) {
     const root = {
@@ -25,9 +26,6 @@ function getRoot2(data = {
                 type: 'image',
                 left: 0,
                 top: 0,
-                // right: 0, // TODO 还不支持
-                // x: 0,
-                // y: 0,
                 width: '100%',
                 height: '100%',
                 url: data.bg,
