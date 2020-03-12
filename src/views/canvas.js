@@ -1,116 +1,8 @@
-
-
-
-
-
-function drawText(context, t, x, y, w, lineHeight, opts, node) {
-
-    let chr = t.split("");
-    let temp = "";
-    let row = [];
-
-    let measureResult = context.measureText(t)
-    let oneLineWidth = measureResult.width
-
-
-    if ((opts.originWidth || 'auto') === 'auto') {
-        w = oneLineWidth
-    }
-
-    // context.font = "20px Arial";
-    // context.fillStyle = "black";
-    // context.textBaseline = "middle";
-
-    for (let a = 0; a < chr.length; a++) {
-
-        if (context.measureText(temp).width < w && context.measureText(temp + (chr[a])).width <= w) {
-            temp += chr[a];
-        }//context.measureText(text).width  测量文本text的宽度
-        else {
-            row.push(temp);
-            temp = chr[a];
-        }
-    }
-    row.push(temp);
-
-    const { textAlign } = opts
-
-    for (let b = 0; b < row.length; b++) {
-        // context.fillText(row[b],x,y+(b+1)*lineHeight)
-        context.textAlign = textAlign
-        let textX
-        if (textAlign === 'left') {
-            textX = x
-        } else if (textAlign === 'right') {
-            textX = x + w
-            // context.fillText(row[b], x + w, y + (b) * lineHeight)
-        } else if (textAlign === 'center') {
-            textX = x + w / 2
-            // context.fillText(row[b], x + w, y + (b) * lineHeight)
-        }
-        context.fillText(row[b], textX, y + (b) * lineHeight)
-    }
-    return {
-        line: row.length,
-        height: row.length * lineHeight
-    }
-
-    // 只显示2行，加...
-    /*for(var b = 0; b < 2; b++){
-        var str = row[b];
-        if(b == 1){
-            str = str.substring(0,str.length-1) + '...';
-        }
-        context.fillText(str,x,y+(b+1)*24);
-    }*/
-}
-
-function calText(context, t, x, y, w, lineHeight, node, opts) {
-
-    let measureResult = context.measureText(t)
-
-    // console.log('计算', measureResult)
-    let oneLineWidth = measureResult.width
-
-    let chr = t.split("");
-    let temp = "";
-    let row = [];
-
-    // context.font = "20px Arial";
-    // context.fillStyle = "black";
-    // context.textBaseline = "middle";
-
-    for (let a = 0; a < chr.length; a++) {
-
-        if (context.measureText(temp).width < w && context.measureText(temp + (chr[a])).width <= w) {
-            temp += chr[a];
-        }//context.measureText(text).width  测量文本text的宽度
-        else {
-            row.push(temp);
-            temp = chr[a];
-        }
-    }
-    row.push(temp);
-
-    for (let b = 0; b < row.length; b++) {
-        // context.fillText(row[b],x,y+(b+1)*lineHeight)
-        context.fillText(row[b], x, y + (b) * lineHeight)
-    }
-    return {
-        textLine: row.length,
-        textHeight: row.length * lineHeight,
-        oneLineWidth,
-        oneLineHeight: opts.textSize,
-    }
-}
-
 class CanvasX {
 
-    constructor(canvas, opts = {}) {
-        this.canvas = canvas
-        this.opts = opts
+    constructor(opts = {}) {
         this.debug = !!opts.debug
-        this.painter = new this.opts.Painter()
+        this.painter = new opts.Painter()
     }
 
     async render(oldRoot) {
@@ -126,20 +18,11 @@ class CanvasX {
 
         let _this = this
 
-        
-
-
-        
-        let canvas = this.canvas
-        let ctx = canvas.getContext('2d')
-        this.painter.setCanvas(canvas)
-        this.painter.setContext(ctx)
-
-        // let root = window.root
+        this.painter.init(this)
 
         let allImage = [] // 所有的图片
 
-        // 处理布局，相对元素的位置
+        // 处理布局，相对元素的位置 TODO 代码荣誉
         function preProcessLayout(node, parent, lastChild, selfIndex) {
             if (node.debug) {
                 console.log('debug node', node)
@@ -214,9 +97,10 @@ class CanvasX {
                     node._x = parent._x + parent._width / 2 - node._width / 2
                 } else {
                     if (node.right !== undefined) {
-                        node._x = parent._x + parent._width - node._width - node._right
+                        node._x = parent._x + parent._width - node._width - node._right + node._margin.right
                     } else {
-                        node._x = parent._x + node._left
+                        node._x = parent._x + node._left + node._margin.left
+                        // node._x = 0
                     }
                 }
                 // calculate y
@@ -235,7 +119,7 @@ class CanvasX {
         }
 
         // 预处理
-        function preProcess(node, parent, lastChild, selfIndex) {
+        const preProcess = (node, parent, lastChild, selfIndex) => {
             // console.log('预处理', node, parent)
             if (node.debug) {
                 console.log('debug node', node)
@@ -463,9 +347,9 @@ class CanvasX {
                 // font family
                 // TODO
 
-                ctx.font = `${node._textSize}px Georgia ${node._fontWeight}` // TODO 封装
+                
 
-                let { textLine, textHeight, oneLineWidth, oneLineHeight } = calText(ctx, node.text, 0, 0, node._width, node._lineHeight, node, {
+                let { textLine, textHeight, oneLineWidth, oneLineHeight } = this.painter.calText(node.text, 0, 0, node._width, node._lineHeight, node, {
                     textSize: node._textSize,
                     originWidth: width,
                 })
@@ -503,6 +387,17 @@ class CanvasX {
                 }
             }
 
+            // if (node.layout === 'x') {
+            //     if (node.children && node.children.length) {
+            //         let totalRate = 0
+            //         for (let idx = 0; idx < children.length; idx++) {
+            //             // let child = children[i]
+            //             // if (node.)
+            //             // totalRate += 
+
+            //         }
+            //     }
+            // }
             if (parent && parent.layout === 'x') {
                 if (parent.yAlign === 'center') { // TODO 怎么用
                     node._y = parent._y + parent._height / 2 - node._height / 2
@@ -577,9 +472,9 @@ class CanvasX {
                     node._x = parent._x + parent._width / 2 - node._width / 2
                 } else {
                     if (node.right !== undefined) {
-                        node._x = parent._x + parent._width - node._width - node._right
+                        node._x = parent._x + parent._width - node._width - node._right + node._margin.right
                     } else {
-                        node._x = parent._x + node._left
+                        node._x = parent._x + node._left + node._margin.left
                     }
                 }
                 // calculate y
@@ -698,14 +593,6 @@ class CanvasX {
         let { requestImageTime } = await this.painter.loadImages(allImage)
         renderParam.requestImageTime = requestImageTime
 
-        let canvasWidth = root.width
-        let canvasHeight = root.height
-        canvas.width = canvasWidth
-        canvas.height = canvasHeight
-        // canvas.setAttribute('width', '' + canvasWidth)
-        // canvas.setAttribute('height', '' + canvasHeight)
-        
-
         this.painter.setSize(root.width, root.height)
 
         this.painter.clear()
@@ -794,13 +681,8 @@ class CanvasX {
                     drawOutline = true
                 }
                 if (type === 'text') {
-                    ctx.beginPath()
-                    ctx.fillStyle = node._textColor
-                    ctx.font = `${node._textSize}px Georgia ${node._fontWeight}`
-                    ctx.textBaseline = 'top'
-                    // ctx.fillText(node.text, x, y)
 
-                    const { line, height } = drawText(ctx, node.text, _x, _y, _width, node._lineHeight, {
+                    this.painter.drawText(node.text, _x, _y, _width, node._lineHeight, {
                         textAlign: node._textAlign,
                         originWidth: node.width,
                     }, node)

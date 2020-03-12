@@ -7,6 +7,14 @@
 }
 
 .box {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 100000;
+    background: #fff;
+    margin-top: 20px;
+    margin-right: 20px;
+
     width: 100px;
     height: 100px;
     min-height: 300px;

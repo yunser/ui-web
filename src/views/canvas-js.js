@@ -100,21 +100,91 @@ function fillRoundRect(cxt, x, y, width, height, radius, /*optional*/ fillColor)
     cxt.restore();
 }
 
+function drawText2(context, t, x, y, w, lineHeight, opts, node) {
+
+    let chr = t.split("");
+    let temp = "";
+    let row = [];
+
+    let measureResult = context.measureText(t)
+    let oneLineWidth = measureResult.width
+
+
+    if ((opts.originWidth || 'auto') === 'auto') {
+        w = oneLineWidth
+    }
+
+    // context.font = "20px Arial";
+    // context.fillStyle = "black";
+    // context.textBaseline = "middle";
+
+    for (let a = 0; a < chr.length; a++) {
+
+        if (context.measureText(temp).width < w && context.measureText(temp + (chr[a])).width <= w) {
+            temp += chr[a];
+        }//context.measureText(text).width  测量文本text的宽度
+        else {
+            row.push(temp);
+            temp = chr[a];
+        }
+    }
+    row.push(temp);
+
+    const { textAlign } = opts
+
+    for (let b = 0; b < row.length; b++) {
+        // context.fillText(row[b],x,y+(b+1)*lineHeight)
+        context.textAlign = textAlign
+        let textX
+        if (textAlign === 'left') {
+            textX = x
+        } else if (textAlign === 'right') {
+            textX = x + w
+            // context.fillText(row[b], x + w, y + (b) * lineHeight)
+        } else if (textAlign === 'center') {
+            textX = x + w / 2
+            // context.fillText(row[b], x + w, y + (b) * lineHeight)
+        }
+        context.fillText(row[b], textX, y + (b) * lineHeight)
+    }
+    return {
+        line: row.length,
+        height: row.length * lineHeight
+    }
+
+    // 只显示2行，加...
+    /*for(var b = 0; b < 2; b++){
+        var str = row[b];
+        if(b == 1){
+            str = str.substring(0,str.length-1) + '...';
+        }
+        context.fillText(str,x,y+(b+1)*24);
+    }*/
+}
+
 class Painter {
 
-    setCanvas(canvas) {
-        this.canvas = canvas
-    }
-
-    setContext(ctx) {
+    init(canvasx) {
+        this.canvas = canvasx.canvas
+        let ctx = canvasx.canvas.getContext('2d')
         this.ctx = ctx
     }
+
+    // setCanvas(canvas) {
+    //     this.canvas = canvas
+    // }
+
+    // setContext(ctx) {
+    //     this.ctx = ctx
+    // }
 
     setSize(width, height) {
         this.canvasWidth = width
         this.canvasHeight = height
         this.ctx.width = width
         this.ctx.height = height
+        this.canvas.width = width
+        this.canvas.height = height
     }
 
     clear() {
@@ -241,18 +311,71 @@ class Painter {
             ctx.stroke()
         }
     }
+
+    drawText(text, x, y, width, lineHeight, opts, node) {
+        const { ctx } = this
+        ctx.beginPath()
+        ctx.fillStyle = node._textColor
+        ctx.font = `${node._textSize}px Georgia ${node._fontWeight}`
+        ctx.textBaseline = 'top'
+
+        const { line, height } = drawText2(ctx, text, x, y, width, lineHeight, opts, node)
+    }
+
+    calText(t, x, y, w, lineHeight, node, opts) {
+        
+        const context = this.ctx
+        context.font = `${node._textSize}px Georgia ${node._fontWeight}` // TODO 封装
+
+        let measureResult = context.measureText(t)
+    
+        // console.log('计算', measureResult)
+        let oneLineWidth = measureResult.width
+    
+        let chr = t.split("");
+        let temp = "";
+        let row = [];
+    
+        // context.font = "20px Arial";
+        // context.fillStyle = "black";
+        // context.textBaseline = "middle";
+    
+        for (let a = 0; a < chr.length; a++) {
+    
+            if (context.measureText(temp).width < w && context.measureText(temp + (chr[a])).width <= w) {
+                temp += chr[a];
+            }//context.measureText(text).width  测量文本text的宽度
+            else {
+                row.push(temp);
+                temp = chr[a];
+            }
+        }
+        row.push(temp);
+    
+        for (let b = 0; b < row.length; b++) {
+            // context.fillText(row[b],x,y+(b+1)*lineHeight)
+            context.fillText(row[b], x, y + (b) * lineHeight)
+        }
+        return {
+            textLine: row.length,
+            textHeight: row.length * lineHeight,
+            oneLineWidth,
+            oneLineHeight: opts.textSize,
+        }
+    }
 }
 
 class JsCanvas extends CanvasX {
 
     constructor(canvas, options) {
-        super(canvas, {
+        super({
             ...options,
             Image: window.Image,
             Painter,
             debug: false,
             // painter: new Painter()
         })
+        this.canvas = canvas
     }
 }
 

@@ -53,6 +53,7 @@ function getRoot2(data = {
                 height: 212,
                 color: '#fff',
                 textColor: '#000',
+                // debug: true,
                 children: [
                     // {
                     //     relative: 'parent',
@@ -64,7 +65,7 @@ function getRoot2(data = {
                     // },
                     {
                         relative: 'parent',
-                        left: '30',
+                        left: 30,
                         top: 67,
                         type: 'text',
                         text: '长按识别小程序码，给我鼓励',
@@ -74,7 +75,7 @@ function getRoot2(data = {
                     },
                     {
                         relative: 'parent',
-                        left: '30',
+                        left: 30,
                         top: 122,
                         type: 'text',
                         text: '来自 立行易™',
@@ -144,15 +145,17 @@ function getRoot2(data = {
                                     {
                                         type: 'text',
                                         text: '' + data.percent,
-                                        width: '100%',
+                                        // width: '100%',
+                                        x: 'center',
                                         // left: 60,
                                         // top: 8,
-                                        strong: '#000',
+                                        // strong: '#000',
                                         textSize: 63,
                                         marginBottom: 20,
                                         fontWeight: 'bold',
                                         // textAlign: 'center', // TODO bug
                                         textAlign: 'center',
+                                        // strong: '#f00',
                                         children: [
                                             {
                                                 type: 'text',
@@ -162,7 +165,8 @@ function getRoot2(data = {
                                                 // left: 90,
                                                 text: '%',
                                                 textSize: 28,
-                                                paddingLeft: 8,
+                                                // paddingLeft: 80, // TODO text 支持 padding
+                                                marginLeft: 4,
                                                 // textAlign: 'center',
                                             }
                                         ],
@@ -173,7 +177,8 @@ function getRoot2(data = {
                                         width: '100%',
                                         textSize: 22,
                                         textAlign: 'center',
-                                        fontFamily: ''
+                                        fontFamily: '',
+                                        // strong: '#f00',
                                     }
                                 ]
                             },
@@ -192,8 +197,9 @@ function getRoot2(data = {
                                 relative: 'parent',
                                 x: 'center',
                                 top: 0,
-                                width: 100,
+                                width: 200,
                                 height: 100,
+                                // strong: '#f00',
                                 children: [
                                     {
                                         type: 'text',
@@ -207,9 +213,11 @@ function getRoot2(data = {
                                     {
                                         type: 'text',
                                         text: '坚持天数',
-                                        width: '100%',
+                                        x: 'center',
+                                        // width: '100%',
                                         textSize: 22,
                                         textAlign: 'center',
+                                        // strong: '#f00',
                                     }
                                 ]
                             },

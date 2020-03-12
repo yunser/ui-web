@@ -55,23 +55,51 @@ export default class Home extends React.Component {
             width: 400,
             height: 400,
             color: '#598cee',
+            padding: 16,
+            debug: true,
+            layout: 'x',
             children: [
                 {
-                    relative: 'parent',
-                    left: '50%',
-                    top: '50%',
-                    width: 200,
-                    height: 200,
-                    color: '#fff',
-                },
-                {
-                    relative: 'parent',
-                    right: '50%',
-                    bottom: '50%',
-                    width: 200,
-                    height: 200,
-                    color: '#f00',
-                },
+                    type: 'text',
+                    text: 'JSON-UI',
+                    textColor: '#fff',
+                    textSize: 32,
+                    debug: true,
+                }
+                // {
+                //     type: 'text',
+                //     text: 'JSON-UI',
+                //     textColor: '#fff',
+                //     textSize: 32,
+                //     debug: true,
+                //     padding: 16,
+                //     margin: 16,
+                //     children: [
+                //         {
+                //             relative: 'parent',
+                //             bottom: 0,
+                //             left: '100%',
+                //             type: 'text',
+                //             text: 'TM',
+                //             textColor: '#fff',
+                //             textSize: 12,
+                //             marginLeft: 4,
+                //         }
+
+                //     ]
+                // },
+                // {
+                //     // width: 100,
+                //     height: 100,
+                //     color: '#fff',
+                //     rate: 1,
+                // },
+                // {
+                //     // width: 100,
+                //     height: 100,
+                //     color: '#ccc',
+                //     rate: 2,
+                // },
             ]
         }
 
