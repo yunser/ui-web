@@ -7,6 +7,7 @@ import Example from './views/Example'
 import Editor from './views/Editor'
 import Empty from './views/Empty'
 import Doc from './views/Doc'
+import Svg from './views/Svg'
 
 import About from './views/About'
 import Record from './views/Record'

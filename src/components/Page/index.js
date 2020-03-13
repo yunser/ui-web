@@ -114,6 +114,13 @@ export default function Page(props) {
                         <ListItemText primary="调试" />
                     </ListItem>
 
+                    <ListItem button component={Link} to="/svg">
+                        <ListItemIcon>
+                            <HomeIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="SVG" />
+                    </ListItem>
+
                     <ListItem button component={Link} to="/empty">
                         <ListItemIcon>
                             <HomeIcon />

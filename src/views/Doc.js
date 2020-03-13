@@ -767,6 +767,7 @@ This is Cat`,
                                     text: 'JSON-UI',
                                     textColor: '#000',
                                     textSize: 24,
+                                    debug: true,
                                 }
                             ]
                         }} />
@@ -847,7 +848,18 @@ This is Cat`,
                             children: [
                                 {
                                     type: 'text',
-                                    text: 'JSON-UI',
+                                    text: 'JSON-UI-lighter',
+                                    textColor: '#fff',
+                                    textSize: 24,
+                                    width: 200,
+                                    // strong: '#000',
+                                    textAlign: 'left',
+                                    debug: true,
+                                    fontWeight: 'lighter',
+                                },
+                                {
+                                    type: 'text',
+                                    text: 'JSON-UI-normal',
                                     textColor: '#fff',
                                     textSize: 24,
                                     width: 200,
@@ -857,7 +869,61 @@ This is Cat`,
                                 },
                                 {
                                     type: 'text',
-                                    text: 'JSON-UI',
+                                    text: 'JSON-UI-bold',
+                                    textColor: '#fff',
+                                    textSize: 24,
+                                    width: 200,
+                                    debug: true,
+                                    fontWeight: 'bold',
+                                },
+                                {
+                                    type: 'text',
+                                    text: 'JSON-UI-bolder',
+                                    textColor: '#fff',
+                                    textSize: 24,
+                                    width: 200,
+                                    debug: true,
+                                    fontWeight: 'bolder',
+                                },
+                            ]
+                        }} />
+
+                        <p>font family</p>
+                        <Example root={{
+                            width: 400,
+                            height: 400,
+                            color: '#598cee',
+                            padding: 16,
+                            children: [
+                                {
+                                    type: 'text',
+                                    text: 'JSON_UI',
+                                    textColor: '#fff',
+                                    textSize: 24,
+                                    debug: true,
+                                },
+                                {
+                                    type: 'text',
+                                    text: 'JSON-UI-normal',
+                                    textColor: '#fff',
+                                    textSize: 24,
+                                    width: 200,
+                                    // strong: '#000',
+                                    textAlign: 'left',
+                                    debug: true,
+                                },
+                                {
+                                    type: 'text',
+                                    text: 'JSON-UI-bold',
+                                    textColor: '#fff',
+                                    textSize: 24,
+                                    width: 200,
+                                    debug: true,
+                                    fontWeight: 'bold',
+                                },
+                                {
+                                    type: 'text',
+                                    text: 'JSON-UI-bolder',
                                     textColor: '#fff',
                                     textSize: 24,
                                     width: 200,

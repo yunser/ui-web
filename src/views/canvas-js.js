@@ -1,5 +1,13 @@
 import { CanvasX } from './canvas'
 
+function getFontStyle(node) {
+    console.log('??', node._fontWeight)
+    let font = `normal ${node._fontWeight} ${node._textSize}px ${node._fontFamily}`
+    // let font = `${node._textSize}px ${node._fontWeight} Georgia` // 乱了
+    console.log('醉了', node, font)
+    // `${node._textSize}px Georgia ${node._fontWeight}` // TODO 封装
+    return font
+}
 
 function drawRoundRectPath(cxt, width, height, radius) {
     cxt.beginPath(0);
@@ -316,7 +324,7 @@ class Painter {
         const { ctx } = this
         ctx.beginPath()
         ctx.fillStyle = node._textColor
-        ctx.font = `${node._textSize}px Georgia ${node._fontWeight}`
+        ctx.font = getFontStyle(node)
         ctx.textBaseline = 'top'
 
         const { line, height } = drawText2(ctx, text, x, y, width, lineHeight, opts, node)
@@ -325,7 +333,7 @@ class Painter {
     calText(t, x, y, w, lineHeight, node, opts) {
         
         const context = this.ctx
-        context.font = `${node._textSize}px Georgia ${node._fontWeight}` // TODO 封装
+        context.font = getFontStyle(node)
 
         let measureResult = context.measureText(t)
     

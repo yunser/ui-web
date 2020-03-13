@@ -322,7 +322,7 @@ class CanvasX {
 
             // text type
             if (node.type === 'text') {
-                const { textSize, lineHeight, textAlign } = node
+                const { textSize, lineHeight, textAlign, fontFamily } = node
 
                 // font size
                 node._textSize = textSize
@@ -345,13 +345,19 @@ class CanvasX {
                 }
 
                 // font family
-                // TODO
+                node._fontFamily = fontFamily
+                if (node._fontFamily === undefined) {
+                    const defaultFontFamilly = 'sans-serif'
+                    node._fontFamily = (parent ? parent._fontFamily : defaultFontFamilly) || defaultFontFamilly
+                }
 
-                
+                // font weight
+                node._fontWeight = node.fontWeight || ''
 
                 let { textLine, textHeight, oneLineWidth, oneLineHeight } = this.painter.calText(node.text, 0, 0, node._width, node._lineHeight, node, {
                     textSize: node._textSize,
                     originWidth: width,
+                    fontFamily: node._fontFamily
                 })
                 // if (line)
                 node._textLine = textLine
@@ -359,9 +365,6 @@ class CanvasX {
                 if (width === 'auto') {
                     node._width = oneLineWidth
                 }
-
-                // font weight
-                node._fontWeight = node.fontWeight || ''
 
                 node._oneLineWidth = oneLineWidth
                 node._oneLineHeight = oneLineHeight
@@ -681,7 +684,7 @@ class CanvasX {
                     drawOutline = true
                 }
                 if (type === 'text') {
-
+                    console.log('画画文字')
                     this.painter.drawText(node.text, _x, _y, _width, node._lineHeight, {
                         textAlign: node._textAlign,
                         originWidth: node.width,
