@@ -107,26 +107,12 @@ export default function Page(props) {
                         <ListItemText primary="编辑器" />
                     </ListItem>
                     
-                    <ListItem button component={Link} to="/debug">
+                    {/* <ListItem button component={Link} to="/debug">
                         <ListItemIcon>
                             <HomeIcon />
                         </ListItemIcon>
                         <ListItemText primary="调试" />
-                    </ListItem>
-
-                    <ListItem button component={Link} to="/svg">
-                        <ListItemIcon>
-                            <HomeIcon />
-                        </ListItemIcon>
-                        <ListItemText primary="SVG" />
-                    </ListItem>
-
-                    <ListItem button component={Link} to="/empty">
-                        <ListItemIcon>
-                            <HomeIcon />
-                        </ListItemIcon>
-                        <ListItemText primary="空页面" />
-                    </ListItem>
+                    </ListItem> */}
 
                     <ListItem button component={'a'} href="https://github.com/yunser/json-ui-home" target="_blank">
                         <ListItemIcon>
@@ -134,12 +120,6 @@ export default function Page(props) {
                         </ListItemIcon>
                         <ListItemText primary="Github" />
                     </ListItem>
-                    {/* <ListItem button component="a" href="https://project.yunser.com/products/c0223e6005c411eaa34a4551ccc26d87" target="_blank">
-                        <ListItemIcon>
-                            <InfoIcon />
-                        </ListItemIcon>
-                        <ListItemText primary="关于" />
-                    </ListItem> */}
                 </List>
             </div>
         )

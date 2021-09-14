@@ -1,4 +1,5 @@
 import { CanvasX } from './canvas'
+import * as Color from 'color'
 
 function getFontStyle(node) {
     console.log('??', node._fontWeight)
@@ -70,19 +71,19 @@ function fillRoundRect(cxt, x, y, width, height, radius, /*optional*/ fillColor)
     * @parama object <img>           矩形背景图
     */
    function drawRoundedImg(ctx, bgimg, x, y, w, h, r) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(x+r,y);
-    ctx.arcTo(x+w,y,x+w,y+h,r);
-    ctx.arcTo(x+w,y+h,x,y+h,r);
-    ctx.arcTo(x,y+h,x,y,r);
-    ctx.arcTo(x,y,x+w,y,r);
-    ctx.stroke();
-    ctx.clip();
-    ctx.drawImage(bgimg, x, y, w, h);
-    ctx.restore();
-    ctx.closePath();
-}
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x+r,y);
+        ctx.arcTo(x+w,y,x+w,y+h,r);
+        ctx.arcTo(x+w,y+h,x,y+h,r);
+        ctx.arcTo(x,y+h,x,y,r);
+        ctx.arcTo(x,y,x+w,y,r);
+        ctx.stroke();
+        ctx.clip();
+        ctx.drawImage(bgimg, x, y, w, h);
+        ctx.restore();
+        ctx.closePath();
+    }
 
 /**该方法用来绘制圆角矩形
  *@param cxt:canvas的上下文环境
@@ -210,6 +211,68 @@ class Painter {
         ctx.stroke()
     }
 
+    drawPolyline(points, style) {
+        const { ctx } = this
+        const styleLine = style.line || {}
+        ctx.strokeStyle = style.stroke.color
+        ctx.beginPath()
+        points.forEach((pt, idx) => {
+            if (idx === 0) {
+                ctx.moveTo(pt.x, pt.y)
+            }
+            else {
+                ctx.lineTo(pt.x, pt.y)
+            }
+        })
+        // ctx.lineTo(line[1].x, line[1].y)
+        ctx.setLineDash(styleLine.dash || [])
+        ctx.stroke()
+    }
+
+    drawPolygon(points, style) {
+        const { ctx } = this
+        const styleLine = style.line || {}
+        ctx.strokeStyle = style.stroke.color
+
+        const { fill, stroke } = style
+
+        ctx.beginPath()
+        points.forEach((pt, idx) => {
+            if (idx === 0) {
+                ctx.moveTo(pt.x, pt.y)
+            }
+            else {
+                ctx.lineTo(pt.x, pt.y)
+            }
+        })
+        ctx.closePath()
+
+        if (fill) {
+            if (fill.gradient) {
+                // let grd = ctx.createLinearGradient(x, y, x, y + height)
+                // grd.addColorStop(0, fill.gradient.from)
+                // grd.addColorStop(1, fill.gradient.to)
+
+                // ctx.fillStyle = grd
+            } else {
+                ctx.fillStyle = fill.color
+            }
+
+            ctx.fill()
+        }
+        if (stroke) {
+            console.log('画边框', stroke)
+            ctx.setLineDash(stroke.dash || []) // TODO
+            ctx.strokeStyle = stroke.color || '#000'
+            ctx.lineWidth = stroke.width || 1
+            ctx.setLineDash(styleLine.dash || [])
+            ctx.stroke()
+        }
+
+        // ctx.lineTo(line[1].x, line[1].y)
+        // ctx.stroke()
+    }
+
     async loadImages(allImage) {
 
         if (allImage.length === 0) {
@@ -280,7 +343,30 @@ class Painter {
         }
     }
 
-    drawRect(x, y, width, height, style) {
+    beforeDrawNode(node) {
+        const { ctx } = this
+        if (node.shadow) {
+            // ctx.shadowBlur = 20
+            const shadow = node.shadow
+            const color = Color(shadow.color || '#000')
+            const rgb = color.object()
+            const rgba = `rgba(${rgb.r * 255}, ${rgb.g * 255}, ${rgb.b * 255}, ${shadow.alpha || 1})`
+            
+            ctx.shadowColor = rgba || '#000'
+            ctx.shadowOffsetX = node.shadow.x || 0
+            ctx.shadowOffsetY = node.shadow.y || 0
+        }
+        else {
+            ctx.shadowBlur = 0
+            ctx.shadowColor = 'transparent'
+            ctx.shadowOffsetX = 0
+            ctx.shadowOffsetY = 0
+        }
+
+        ctx.globalAlpha = 1
+    }
+
+    drawRect(x, y, width, height, style, shadow) {
         const { ctx } = this
         // const styleLine = style.line || {}
         // ctx.strokeStyle = style.stroke.color
@@ -292,11 +378,17 @@ class Painter {
         const { fill, stroke } = style
 
         ctx.beginPath()
+
+        
+
         if (style.radius) {
             strokeRoundRect(ctx, x, y, width, height, style.radius)
         } else {
             ctx.rect(x, y, width, height)
         }
+
+        ctx.globalAlpha = style.opacity
+        
         if (fill) {
             if (fill.gradient) {
                 let grd = ctx.createLinearGradient(x, y, x, y + height)
@@ -309,6 +401,149 @@ class Painter {
                 ctx.fillStyle = fill.color
             }
             
+            ctx.fill()
+        }
+        if (stroke) {
+            console.log('画边框', stroke)
+            ctx.setLineDash(stroke.dash || []) // TODO
+            ctx.strokeStyle = stroke.color || '#000'
+            ctx.lineWidth = stroke.width || 1
+            ctx.stroke()
+        }
+
+        
+    }
+
+    drawPath(d, style) {
+        const { ctx } = this
+        // const styleLine = style.line || {}
+        // ctx.strokeStyle = style.stroke.color
+        // ctx.beginPath()
+        // ctx.moveTo(line[0].x, line[0].y)
+        // ctx.lineTo(line[1].x, line[1].y)
+        // ctx.setLineDash(styleLine.dash || [])
+        // ctx.stroke()
+        const { fill, stroke } = style
+
+        ctx.beginPath()
+
+
+
+        // if (style.radius) {
+        //     strokeRoundRect(ctx, x, y, width, height, style.radius)
+        // } else {
+        //     ctx.rect(x, y, width, height)
+        // }
+
+        const path = new Path2D(d)
+        // rectangle.rect(10, 10, 50, 50);
+        // var circle = new Path2D();
+        // circle.moveTo(125, 35);
+        // circle.arc(100, 35, 25, 0, 2 * Math.PI);
+        // ctx.stroke(rectangle);
+        // ctx.fillStyle = '#000'
+        
+
+        if (fill) {
+            if (fill.gradient) {
+                // let grd = ctx.createLinearGradient(x, y, x, y + height)
+                // grd.addColorStop(0, fill.gradient.from)
+                // grd.addColorStop(1, fill.gradient.to)
+
+                // ctx.fillStyle = grd
+            } else {
+                ctx.fillStyle = fill.color
+            }
+
+            ctx.fill(path)
+        }
+        if (stroke) {
+            console.log('画边框', stroke)
+            ctx.setLineDash(stroke.dash || []) // TODO
+            ctx.strokeStyle = stroke.color || '#000'
+            ctx.lineWidth = stroke.width || 1
+            ctx.stroke(path)
+        }
+    }
+
+    drawCircle(x, y, width, height, style) {
+        const { ctx } = this
+        // const styleLine = style.line || {}
+        // ctx.strokeStyle = style.stroke.color
+        // ctx.beginPath()
+        // ctx.moveTo(line[0].x, line[0].y)
+        // ctx.lineTo(line[1].x, line[1].y)
+        // ctx.setLineDash(styleLine.dash || [])
+        // ctx.stroke()
+        const { fill, stroke } = style
+
+        ctx.beginPath()
+        // if (style.radius) {
+        //     strokeRoundRect(ctx, x, y, width, height, style.radius)
+        // } else {
+        // }
+        const radius = width / 2
+        const cx = x + radius
+        const cy = y + radius
+        ctx.arc(cx, cy, radius, 0, 2 * Math.PI)
+
+        if (fill) {
+            if (fill.gradient) {
+                let grd = ctx.createLinearGradient(x, y, x, y + height)
+                grd.addColorStop(0, fill.gradient.from)
+                grd.addColorStop(1, fill.gradient.to)
+
+                // fill.gradient = grd
+                ctx.fillStyle = grd
+            } else {
+                ctx.fillStyle = fill.color
+            }
+
+            ctx.fill()
+        }
+        if (stroke) {
+            console.log('画边框', stroke)
+            ctx.setLineDash(stroke.dash || []) // TODO
+            ctx.strokeStyle = stroke.color || '#000'
+            ctx.lineWidth = stroke.width || 1
+            ctx.stroke()
+        }
+    }
+
+    drawEllipse(x, y, width, height, style) {
+        const { ctx } = this
+        // const styleLine = style.line || {}
+        // ctx.strokeStyle = style.stroke.color
+        // ctx.beginPath()
+        // ctx.moveTo(line[0].x, line[0].y)
+        // ctx.lineTo(line[1].x, line[1].y)
+        // ctx.setLineDash(styleLine.dash || [])
+        // ctx.stroke()
+        const { fill, stroke } = style
+
+        ctx.beginPath()
+        // if (style.radius) {
+        //     strokeRoundRect(ctx, x, y, width, height, style.radius)
+        // } else {
+        // }
+        const rx = width / 2
+        const ry = height / 2
+        const cx = x + rx
+        const cy = y + ry
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI)
+
+        if (fill) {
+            if (fill.gradient) {
+                let grd = ctx.createLinearGradient(x, y, x, y + height)
+                grd.addColorStop(0, fill.gradient.from)
+                grd.addColorStop(1, fill.gradient.to)
+
+                // fill.gradient = grd
+                ctx.fillStyle = grd
+            } else {
+                ctx.fillStyle = fill.color
+            }
+
             ctx.fill()
         }
         if (stroke) {

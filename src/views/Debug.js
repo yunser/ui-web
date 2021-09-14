@@ -65,6 +65,7 @@ export default class Home extends React.Component {
                     textColor: '#fff',
                     textSize: 32,
                     debug: true,
+                    
                 }
                 // {
                 //     type: 'text',

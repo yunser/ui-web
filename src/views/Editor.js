@@ -45,13 +45,22 @@ function Example(props) {
 export default class Home extends React.Component {
 
     state = {
-        input: `{
-    "x": "0",
-    "y": 0,
-    "width": 400,
-    "height": 400,
-    "color": "#598cee"
-}`,
+        input: JSON.stringify({
+            "x": "0",
+            "y": 0,
+            "width": 400,
+            "height": 400,
+            "color": "#598cee",
+            children: [
+                {
+                    x: 100,
+                    y: 100,
+                    width: 100,
+                    height:100,
+                    color: '#f00',
+                }
+            ]
+        }, null, 4),
     }
 
     render() {
@@ -73,12 +82,12 @@ export default class Home extends React.Component {
         return (
             <Page title="调试">
                 <div className={classes.container}>
-                    <div class="common-container container">
-                        <textarea className={classes.textarea}
-                            onChange={handlerChange} value={input} ></textarea>
-                        
-                        <Example rootText={input} />
-                    </div>
+                    <textarea className={classes.textarea}
+                        onChange={handlerChange} value={input} ></textarea>
+                    
+                    <Example rootText={input} />
+                    {/* <div class="common-container container">
+                    </div> */}
                 </div>
             </Page>
         )

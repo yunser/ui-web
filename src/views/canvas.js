@@ -1,3 +1,26 @@
+function getType(node) {
+    if (node._type == 'rect') {
+        return 'view'
+    }
+    if (node._type == 'root') {
+        return 'view'
+    }
+    if (node._type == 'group') {
+        return 'view'
+    }
+    return node._type || node.type || 'view'
+}
+
+const Types = {
+    Image: 'image',
+    Circle: 'circle',
+    Path: 'path',
+    Ellipse: 'ellipse',
+    Line: 'line',
+    Polyline: 'polyline',
+    Polygon: 'polygon',
+}
+
 class CanvasX {
 
     constructor(opts = {}) {
@@ -37,7 +60,17 @@ class CanvasX {
             // x
             node._x = x
             if (x === undefined) {
-                node._x = parent ? (parent._x + parent._padding.left + node._margin.left) : 0
+                if (getType(node) === Types.Circle) {
+                    node._x = node.cx - node.radius
+                }
+                else if (getType(node) === Types.Ellipse) {
+                    node._x = node.cx - node.rx
+                }
+                else {
+                    node._x = parent ? (parent._x + parent._padding.left + node._margin.left) : 0
+                }
+
+                // cjh
             } else if (x === 'left') {
                 node._x = parent ? (parent._x + parent._padding.left) : 0
             } else if (x === 'center') {
@@ -47,7 +80,13 @@ class CanvasX {
             // y
             node._y = y
             if (y === undefined) {
-                if (lastChild) {
+                if (getType(node) === Types.Circle) {
+                    node._y = node.cy - node.radius
+                }
+                else if (getType(node) === Types.Ellipse) {
+                    node._y = node.cy - node.ry
+                }
+                else if (lastChild) {
                     node._y = lastChild._y + lastChild._height + lastChild._margin.bottom + node._margin.top
                 } else {
                     node._y = parent ? (parent._y + parent._padding.top + node._margin.top) : 0
@@ -105,7 +144,7 @@ class CanvasX {
                 }
                 // calculate y
                 if (y === 'center') {
-                    node._y = parent._y + parent._height / 2 - (node.type === 'text' ? node._oneLineHeight : node._height) / 2
+                    node._y = parent._y + parent._height / 2 - (getType(node) === 'text' ? node._oneLineHeight : node._height) / 2
                 } else {
                     if (node.top !== undefined) {
                         node._y = parent._y + node._top
@@ -125,7 +164,7 @@ class CanvasX {
                 console.log('debug node', node)
             }
             const {
-                type = 'node',
+                // type = 'node',
                 color = '#999',
                 x,
                 y,
@@ -149,7 +188,7 @@ class CanvasX {
             } = node
 
             // text color，默认继承父节点，否则 #000
-            node._textColor = textColor
+            node._textColor = textColor || node.color
             if (node._textColor === undefined) {
                 node._textColor = (parent ? parent._textColor : '') || '#000'
             }
@@ -162,7 +201,14 @@ class CanvasX {
 
             // width
             node._width = width
-            if (node._width === 'auto') {
+            if (getType(node) === Types.Circle) {
+                node._width = node.radius * 2
+                console.log('远啊', node)
+            }
+            else if (getType(node) === Types.Ellipse) {
+                node._width = node.rx * 2
+            }
+            else if (node._width === 'auto') {
                 node._width = parent ? parent._innerWidth : 999
             } else if (typeof width === 'string') {
                 // 只支持百分比的形式
@@ -180,7 +226,13 @@ class CanvasX {
 
             // height
             node._height = height
-            if (node._height === 'auto') {
+            if (getType(node) === Types.Circle) {
+                node._height = node.radius * 2
+            }
+            else if (getType(node) === Types.Ellipse) {
+                node._height = node.ry * 2
+            }
+            else if (node._height === 'auto') {
                 // 在后面处理
             } else if (typeof node._height === 'string') {
                 // 只支持百分比的形式
@@ -316,12 +368,12 @@ class CanvasX {
             }
 
             // image type
-            if (node.type === 'image') {
+            if (getType(node) === Types.Image) {
                 allImage.push(node.url)
             }
 
             // text type
-            if (node.type === 'text') {
+            if (getType(node) === 'text') {
                 const { textSize, lineHeight, textAlign, fontFamily } = node
 
                 // font size
@@ -482,7 +534,7 @@ class CanvasX {
                 }
                 // calculate y
                 if (y === 'center') {
-                    node._y = parent._y + parent._height / 2 - (node.type === 'text' ? node._oneLineHeight : node._height) / 2
+                    node._y = parent._y + parent._height / 2 - (getType(node) === 'text' ? node._oneLineHeight : node._height) / 2
                 } else {
                     if (node.top !== undefined) {
                         node._y = parent._y + node._top
@@ -591,7 +643,9 @@ class CanvasX {
 
         preProcess(root, null, null, undefined)
         
-        // console.log('预处理后', root)
+        console.log('预处理后', root)
+
+        this._root = root
 
         let { requestImageTime } = await this.painter.loadImages(allImage)
         renderParam.requestImageTime = requestImageTime
@@ -603,7 +657,6 @@ class CanvasX {
         const drawNode = async (node) => {
             // console.log('画画', node)
             const {
-                type = 'view',
                 color,
                 borderRadius = 0,
 
@@ -617,12 +670,16 @@ class CanvasX {
                 _visible,
             } = node
 
+            const __type = getType(node)
+
+            this.painter.beforeDrawNode && this.painter.beforeDrawNode(node)
 
 
             let drawOutline = false
 
             if (_visible) {
-                if (type === 'view') {
+
+                function getStyle(node) {
                     let style = {}
 
                     // fill
@@ -642,7 +699,7 @@ class CanvasX {
                     }
 
                     style.radius = borderRadius
-                   
+
                     if (color) {
                     } else {
                         drawOutline = true
@@ -657,16 +714,140 @@ class CanvasX {
                         }
                         style.stroke = stroke
                     }
-                    this.painter.drawRect(_x, _y, _width, _height, style)
+
+                    if (node.opacity == undefined) {
+                        style.opacity = 1
+                    }
+                    else {
+                        style.opacity = node.opacity
+                    }
+                    return style
                 }
-                if (type === 'line') {
+
+                if (__type === 'view') {
+                    
+                    this.painter.drawRect(_x, _y, _width, _height, getStyle(node), node.shadow)
+                }
+                if (__type === Types.Circle) {
+                    let style = {}
+
+                    // fill
+                    if (node.gradient) {
+                        // gradient
+                        style.fill = {
+                            gradient: {
+                                from: node.gradient.from,
+                                to: node.gradient.to,
+                            }
+                        }
+                    } else if (node.color) {
+                        // fill color
+                        style.fill = {
+                            color,
+                        }
+                    }
+
+                    style.radius = borderRadius
+
+                    if (color) {
+                    } else {
+                        drawOutline = true
+                    }
+                    // border
+                    if (node.border) {
+                        const { color = '#000', width = 1, dash = [] } = node.border
+                        let stroke = {
+                            color,
+                            width,
+                            dash,
+                        }
+                        style.stroke = stroke
+                    }
+                    this.painter.drawCircle(_x, _y, _width, _height, style)
+                }
+                if (__type === Types.Ellipse) {
+                    let style = {}
+
+                    // fill
+                    if (node.gradient) {
+                        // gradient
+                        style.fill = {
+                            gradient: {
+                                from: node.gradient.from,
+                                to: node.gradient.to,
+                            }
+                        }
+                    } else if (node.color) {
+                        // fill color
+                        style.fill = {
+                            color,
+                        }
+                    }
+
+                    style.radius = borderRadius
+
+                    if (color) {
+                    } else {
+                        drawOutline = true
+                    }
+                    // border
+                    if (node.border) {
+                        const { color = '#000', width = 1, dash = [] } = node.border
+                        let stroke = {
+                            color,
+                            width,
+                            dash,
+                        }
+                        style.stroke = stroke
+                    }
+                    this.painter.drawEllipse(_x, _y, _width, _height, style)
+                }
+                if (__type === Types.Path) {
+                    let style = {}
+
+                    // fill
+                    if (node.gradient) {
+                        // gradient
+                        style.fill = {
+                            gradient: {
+                                from: node.gradient.from,
+                                to: node.gradient.to,
+                            }
+                        }
+                    } else if (node.color) {
+                        // fill color
+                        style.fill = {
+                            color,
+                        }
+                    }
+
+                    style.radius = borderRadius
+
+                    if (color) {
+                    } else {
+                        drawOutline = true
+                    }
+                    // border
+                    if (node.border) {
+                        const { color = '#000', width = 1, dash = [] } = node.border
+                        let stroke = {
+                            color,
+                            width,
+                            dash,
+                        }
+                        style.stroke = stroke
+                    }
+                    this.painter.drawPath(node.d, style)
+                }
+                if (__type === Types.Line) {
                     let dash
                     if (node.lineStyle === 'dashed') {
                         dash = [8, 8]
                     } else {
                         dash = []
                     }
-                    this.painter.drawLine([{x: node.x, y: node.y}, {x: node.x2, y: node.y2}], {
+                    // TODO
+                    this.painter.drawLine([{ x: node.x || node.x1, y: node.y || node.y1}, {x: node.x2, y: node.y2}], {
                         stroke: {
                             color: color,
                         },
@@ -677,13 +858,60 @@ class CanvasX {
                     })
 
                 }
-                if (type === 'image') {
+                if (__type === Types.Polyline) {
+                    let dash
+                    if (node.lineStyle === 'dashed') {
+                        dash = [8, 8]
+                    } else {
+                        dash = []
+                    }
+                    // TODO
+                    this.painter.drawPolyline(node.points, {
+                        stroke: {
+                            color: color,
+                        },
+                        fill: null,
+                        line: {
+                            dash,
+                        }
+                    })
+
+                }
+                if (__type === Types.Polygon) {
+                    // fill
+                    // let fill = null
+                    // if (node.gradient) {
+                    //     // gradient
+                    //     fill = {
+                    //         gradient: {
+                    //             from: node.gradient.from,
+                    //             to: node.gradient.to,
+                    //         }
+                    //     }
+                    // } else if (node.color) {
+                    //     // fill color
+                    //     fill = {
+                    //         color,
+                    //     }
+                    // }
+
+                    // let dash
+                    // if (node.lineStyle === 'dashed') {
+                    //     dash = [8, 8]
+                    // } else {
+                    //     dash = []
+                    // }
+                    // TODO
+                    this.painter.drawPolygon(node.points, getStyle(node))
+
+                }
+                if (__type === Types.Image) {
                     this.painter.drawImage(node.url, _x, _y, _width, _height, {
                         radius: node._borderRadius
                     })
                     drawOutline = true
                 }
-                if (type === 'text') {
+                if (__type === 'text') {
                     console.log('画画文字')
                     this.painter.drawText(node.text, _x, _y, _width, node._lineHeight, {
                         textAlign: node._textAlign,
@@ -692,6 +920,7 @@ class CanvasX {
 
                     drawOutline = true
                 }
+                
             }
 
             if (_this.debug) {
